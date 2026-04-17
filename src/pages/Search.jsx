@@ -47,19 +47,15 @@ function CategoryCard({ cat, onSelect }) {
       whileHover={{ scale: 1.04, y: -2 }}
       whileTap={{ scale: 0.97 }}
       onClick={() => onSelect(cat.query, cat.label)}
-      className="relative aspect-[5/3] rounded-2xl overflow-hidden flex items-end p-4 text-left"
+      className="relative w-full h-20 rounded-xl overflow-hidden flex items-end p-3 text-left"
       style={{ background: `linear-gradient(135deg, ${cat.from}, ${cat.to})` }}
     >
-      {/* decorative shape */}
-      <div
-        className="absolute -bottom-4 -right-4 w-24 h-24 rounded-full opacity-20"
-        style={{ background: 'rgba(255,255,255,0.3)' }}
-      />
-      <div
-        className="absolute -top-2 -right-2 w-12 h-12 rounded-full opacity-10"
-        style={{ background: 'rgba(255,255,255,0.5)' }}
-      />
-      <span className="relative z-10 text-white font-bold text-sm drop-shadow-lg">{cat.label}</span>
+      {/* Decorative circles */}
+      <div className="absolute -bottom-3 -right-3 w-20 h-20 rounded-full bg-white/10 pointer-events-none" />
+      <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-white/10 pointer-events-none" />
+      <span className="relative z-10 text-white font-bold text-sm drop-shadow-lg leading-tight">
+        {cat.label}
+      </span>
     </motion.button>
   );
 }
@@ -221,7 +217,9 @@ export default function Search() {
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <TrendingUp size={18} className="text-[#a7a7a7]" /> Browse All
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}
+          >
             {CATEGORIES.map((cat, i) => (
               <motion.div
                 key={cat.label}

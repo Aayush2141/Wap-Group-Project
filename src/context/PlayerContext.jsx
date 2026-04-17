@@ -71,8 +71,27 @@ export function PlayerProvider({ children }) {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentSong) return;
-    if (isPlaying) audio.play().catch(() => setIsPlaying(false));
-    else           audio.pause();
+
+    if (isPlaying) {
+      // Wrap in async try/catch — browsers may reject play() before audio is ready
+      const attemptPlay = async () => {
+        try {
+          await audio.play();
+        } catch (err) {
+          // AbortError = another play() call interrupted this one (safe to ignore)
+          // NotAllowedError = autoplay blocked (user must interact first)
+          if (err.name !== 'AbortError') setIsPlaying(false);
+        }
+      };
+      // If audio is already loaded, play immediately; otherwise wait for canplay
+      if (audio.readyState >= 2) {
+        attemptPlay();
+      } else {
+        audio.addEventListener('canplay', attemptPlay, { once: true });
+      }
+    } else {
+      audio.pause();
+    }
   }, [isPlaying, currentSong]);
 
   /* ── keyboard shortcuts (global) ────────────────────────────────────────── */
@@ -105,8 +124,11 @@ export function PlayerProvider({ children }) {
   const loadSong = useCallback((song) => {
     if (!song?.preview) return;
     const audio = audioRef.current;
+
+    // IMPORTANT: set src BEFORE calling load() — required for all browsers
     audio.src = song.preview;
     audio.load();
+
     setCurrentSong(song);
     setProgress(0);
     setDuration(0);

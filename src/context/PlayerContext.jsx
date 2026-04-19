@@ -208,13 +208,21 @@ export function PlayerProvider({ children }) {
   }
 
   // skipNext: moves to the next song in the queue
-  function skipNext() {
-    if (!queue.length) return;
-    const next = (queueIndex + 1) % queue.length; // wrap around if at end
-    setQueueIndex(next);
-    loadSong(queue[next]);
-    setIsPlaying(true);
+function skipNext() {
+  if (!queue.length) return;
+
+  let next;
+
+  if (isShuffling) {
+    next = Math.floor(Math.random() * queue.length);
+  } else {
+    next = (queueIndex + 1) % queue.length;
   }
+
+  setQueueIndex(next);
+  loadSong(queue[next]);
+  setIsPlaying(true);
+}
 
   // skipPrev: if we're past 3 seconds, restart; otherwise go to previous song
   function skipPrev() {

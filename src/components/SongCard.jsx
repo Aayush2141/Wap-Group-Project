@@ -57,8 +57,11 @@ function AlbumArt({ song, isActive, isPlaying }) {
         </div>
       )}
     </div>
-  );
+  )
 }
+
+
+
 /* ── SongCard ──────────────────────────────────────────────────────────────── */
 export default function SongCard({ song, queue = [], index = 0 }) {
   const {

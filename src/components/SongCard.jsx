@@ -13,8 +13,8 @@ export function SongCardSkeleton() {
       <div className="skeleton h-3 w-3/5 rounded-md" />
     </div>
   );
-}
 
+}
 /* ── Album Art with graceful fallback ─────────────────────────────────────── */
 function AlbumArt({ song, isActive, isPlaying }) {
   const [imgFailed, setImgFailed] = useState(false);
@@ -59,7 +59,6 @@ function AlbumArt({ song, isActive, isPlaying }) {
     </div>
   );
 }
-
 /* ── SongCard ──────────────────────────────────────────────────────────────── */
 export default function SongCard({ song, queue = [], index = 0 }) {
   const {
@@ -76,7 +75,6 @@ export default function SongCard({ song, queue = [], index = 0 }) {
     if (active) togglePlay();
     else playSong(song, ctx);
   };
-
   const handleArtist = (e) => {
     e.stopPropagation();
     const id = song.artistId || song.artist?.id;
@@ -100,7 +98,6 @@ export default function SongCard({ song, queue = [], index = 0 }) {
       {/* Album art with fallback */}
       <div className="relative">
         <AlbumArt song={song} isActive={active} isPlaying={isPlaying} />
-
         {/* Play / pause overlay button */}
         <motion.div
           initial={false}
@@ -121,7 +118,6 @@ export default function SongCard({ song, queue = [], index = 0 }) {
               : <Play  size={18} fill="black" className="text-black ml-0.5" />
             }
           </motion.button>
-
           <span className="text-[10px] font-mono text-white/70 bg-black/60 rounded-md
             px-1.5 py-0.5 flex items-center gap-1">
             <Clock size={9} /> {fmt(song.duration)}
@@ -130,7 +126,7 @@ export default function SongCard({ song, queue = [], index = 0 }) {
 
         {/* Like button */}
         <motion.button
-          whileTap={{ scale: 0.8 }}
+          whileTap={{scale:0.8 }}
           onClick={(e) => { e.stopPropagation(); toggleLike(song); }}
           aria-label={liked ? 'Unlike' : 'Like'}
           className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full flex items-center justify-center
@@ -147,6 +143,7 @@ export default function SongCard({ song, queue = [], index = 0 }) {
 
       {/* Info */}
       <div className="flex flex-col gap-1 min-w-0">
+
         <p className={`text-sm font-semibold truncate leading-tight transition-colors
           ${active ? 'text-[#1db954]' : 'text-white'}`}>
           {song.title}
@@ -156,7 +153,7 @@ export default function SongCard({ song, queue = [], index = 0 }) {
           className="text-[11px] text-[#a7a7a7] hover:text-white hover:underline text-left truncate transition-colors"
         >
           {/* Support both flat (song.artist = string) and nested (song.artist.name) shapes */}
-          {typeof song.artist === 'string' ? song.artist : song.artist?.name}
+          {typeof song.artist === 'string' ? song.artist:song.artist?.name}
         </button>
       </div>
     </motion.div>

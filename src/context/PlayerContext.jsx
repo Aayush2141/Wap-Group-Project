@@ -48,6 +48,8 @@ export function PlayerProvider({ children }) {
   const [volume,      setVolume]      = useState(() => ls.get('volume', 0.75)); // 0.0–1.0 volume
   const [isMuted,     setIsMuted]     = useState(false);     // whether the user muted the audio
   const [isExpanded,  setIsExpanded]  = useState(false);     // whether the big player overlay is open
+  const [isShuffling, setIsShuffling] = useState(false);
+  const [repeatMode, setRepeatMode] = useState('off'); // 'off' | 'one' | 'all'
 
   // ── persisted state ───────────────────────────────────────────────────────
   // Helper: rejects old Deezer-format songs that have dead CDN links

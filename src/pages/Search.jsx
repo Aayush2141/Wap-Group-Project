@@ -9,18 +9,21 @@ import { useFetchSongs } from '../hooks/useFetchSongs';
 function Highlight({ text = '', query = '' }) {
   if (!query.trim()) return <span>{text}</span>;
   const regex  = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  
   const parts  = text.split(regex);
   return (
+
     <span>
       {parts.map((p, i) =>
+
         regex.test(p)
           ? <mark key={i} className="bg-[#1db954]/25 text-[#1ed760] rounded px-0.5">{p}</mark>
           : <span key={i}>{p}</span>
       )}
     </span>
+
   );
 }
-
 /* ── Browse categories ───────────────────────────────────────────────────────── */
 const CATEGORIES = [
   { label: 'Pop',         query: 'pop hits',          from: '#e63946', to: '#c1121f' },
@@ -49,6 +52,7 @@ function CategoryCard({ cat, onSelect }) {
       onClick={() => onSelect(cat.query, cat.label)}
       className="relative w-full h-20 rounded-xl overflow-hidden flex items-end p-3 text-left"
       style={{ background: `linear-gradient(135deg, ${cat.from}, ${cat.to})` }}
+
     >
       {/* Decorative circles */}
       <div className="absolute -bottom-3 -right-3 w-20 h-20 rounded-full bg-white/10 pointer-events-none" />
@@ -63,6 +67,7 @@ function CategoryCard({ cat, onSelect }) {
 /* ── Search results with artist grouping ─────────────────────────────────────── */
 function SearchResults({ query }) {
   const { songs, loading, error } = useFetchSongs(query, 30, 0);
+
   const navigate = useNavigate();
 
   // Group unique artists from results
@@ -126,18 +131,18 @@ function SearchResults({ query }) {
           </div>
         </section>
       )}
-
       {/* Songs section */}
+
       <section>
         {!loading && songs.length > 0 && (
           <h2 className="text-lg font-bold text-white mb-4">Songs</h2>
         )}
         <SongGrid songs={songs} loading={loading} skeletonCount={15} />
+
       </section>
     </div>
   );
 }
-
 /* ── Search page ─────────────────────────────────────────────────────────────── */
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();

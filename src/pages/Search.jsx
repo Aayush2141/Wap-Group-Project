@@ -173,6 +173,8 @@ export default function Search() {
   }, []); // eslint-disable-line
 
   const handleCategorySelect = (query, label) => {
+    // scroll to top when category selected
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setLocalQ(query);
     setActiveQ(query);
     setSearchParams({ q: query }, { replace: true });

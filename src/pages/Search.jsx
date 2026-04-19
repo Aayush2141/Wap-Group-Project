@@ -9,7 +9,7 @@ import { useFetchSongs } from '../hooks/useFetchSongs';
 function Highlight({ text = '', query = '' }) {
   if (!query.trim()) return <span>{text}</span>;
   const regex  = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  
+
   const parts  = text.split(regex);
   return (
 
@@ -66,7 +66,8 @@ function CategoryCard({ cat, onSelect }) {
 
 /* ── Search results with artist grouping ─────────────────────────────────────── */
 function SearchResults({ query }) {
-  const { songs, loading, error } = useFetchSongs(query, 30, 0);
+  // const { songs, loading, error } = useFetchSongs(query, 30, 0);
+  const { songs, loading, error } = useFetchSongs(query || '', 30, 0);
 
   const navigate = useNavigate();
 

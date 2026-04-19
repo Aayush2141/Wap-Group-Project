@@ -9,11 +9,13 @@ import { useFetchSongs } from '../hooks/useFetchSongs';
 function Highlight({ text = '', query = '' }) {
   if (!query.trim()) return <span>{text}</span>;
   const regex  = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  
   const parts  = text.split(regex);
   return (
 
     <span>
       {parts.map((p, i) =>
+
         regex.test(p)
           ? <mark key={i} className="bg-[#1db954]/25 text-[#1ed760] rounded px-0.5">{p}</mark>
           : <span key={i}>{p}</span>
@@ -130,17 +132,17 @@ function SearchResults({ query }) {
         </section>
       )}
       {/* Songs section */}
+
       <section>
         {!loading && songs.length > 0 && (
           <h2 className="text-lg font-bold text-white mb-4">Songs</h2>
         )}
         <SongGrid songs={songs} loading={loading} skeletonCount={15} />
-        
+
       </section>
     </div>
   );
 }
-
 /* ── Search page ─────────────────────────────────────────────────────────────── */
 export default function Search() {
   const [searchParams, setSearchParams] = useSearchParams();

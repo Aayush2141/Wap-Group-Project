@@ -1,43 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchSongs, fetchArtist, fetchChart } from '../utils/api';
 
-// ─── useFetchSongs ─────────────────────────────────────────────────────────────
-/**
- * Fetch and debounce song searches.
- *
- * @param {string}  query        - Search term
- * @param {number}  limit        - Max results
- * @param {number}  debounceMs   - Debounce delay
- * @returns {{ songs, loading, error, refetch }}
- */
 export function useFetchSongs(query, limit = 20, debounceMs = 400) {
   const [songs,   setSongs]   = useState([]);
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState(null);
-  const timerRef = useRef(null);
-  const abortRef = useRef(null);
-
-  const load = useCallback(async (q) => {
-    if (abortRef.current) abortRef.current = false;
-    const token = {};
-    abortRef.current = token;
-
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await fetchSongs(q, limit);
-      if (abortRef.current === token) {
-        setSongs(data);
-      }
-    } catch (err) {
-      if (abortRef.current === token) {
-        setError(err.message);
-        setSongs([]);
-      }
-    } finally {
-      if (abortRef.current === token) setLoading(false);
-    }
-  }, [limit]);
+  const [count,   setCount]   = useState(0); // used by refetch
 
   useEffect(() => {
     if (!query?.trim()) {
@@ -45,19 +13,36 @@ export function useFetchSongs(query, limit = 20, debounceMs = 400) {
       setLoading(false);
       return;
     }
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => load(query.trim()), debounceMs);
-    return () => clearTimeout(timerRef.current);
-  }, [query, load, debounceMs]);
 
-  const refetch = useCallback(() => {
-    if (query?.trim()) load(query.trim());
-  }, [query, load]);
+    let cancelled = false;
+
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchSongs(query.trim(), limit);
+        if (!cancelled) setSongs(data);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message);
+          setSongs([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, debounceMs);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, limit, debounceMs, count]);
+
+  const refetch = () => setCount(c => c + 1);
 
   return { songs, loading, error, refetch };
 }
 
-// ─── useFetchArtist ───────────────────────────────────────────────────────────
 export function useFetchArtist(artistId) {
   const [artist,  setArtist]  = useState(null);
   const [songs,   setSongs]   = useState([]);
@@ -83,7 +68,6 @@ export function useFetchArtist(artistId) {
   return { artist, songs, loading, error };
 }
 
-// ─── useFetchChart ────────────────────────────────────────────────────────────
 export function useFetchChart(limit = 20) {
   const [songs,   setSongs]   = useState([]);
   const [loading, setLoading] = useState(true);

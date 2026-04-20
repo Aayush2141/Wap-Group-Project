@@ -2,20 +2,18 @@ import { useState, useEffect } from 'react';
 import { fetchSongs, fetchArtist, fetchChart } from '../utils/api';
 
 export function useFetchSongs(query, limit = 20, debounceMs = 400) {
-  const [songs,   setSongs]   = useState([]);
+  const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState(null);
-  const [count,   setCount]   = useState(0); // used by refetch
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!query?.trim()) {
+    if (!query || !query.trim()) {
       setSongs([]);
       setLoading(false);
       return;
     }
 
     let cancelled = false;
-
     const timer = setTimeout(async () => {
       setLoading(true);
       setError(null);
@@ -23,45 +21,33 @@ export function useFetchSongs(query, limit = 20, debounceMs = 400) {
         const data = await fetchSongs(query.trim(), limit);
         if (!cancelled) setSongs(data);
       } catch (err) {
-        if (!cancelled) {
-          setError(err.message);
-          setSongs([]);
-        }
+        if (!cancelled) { setError(err.message); setSongs([]); }
       } finally {
         if (!cancelled) setLoading(false);
       }
     }, debounceMs);
 
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [query, limit, debounceMs, count]);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [query, limit, debounceMs]);
 
-  const refetch = () => setCount(c => c + 1);
-
-  return { songs, loading, error, refetch };
+  return { songs, loading, error };
 }
 
 export function useFetchArtist(artistId) {
-  const [artist,  setArtist]  = useState(null);
-  const [songs,   setSongs]   = useState([]);
+  const [artist, setArtist] = useState(null);
+  const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!artistId) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
-
     fetchArtist(artistId)
-      .then(({ artist, songs }) => {
-        if (!cancelled) { setArtist(artist); setSongs(songs); }
-      })
+      .then(({ artist, songs }) => { if (!cancelled) { setArtist(artist); setSongs(songs); } })
       .catch(err => { if (!cancelled) setError(err.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
-
     return () => { cancelled = true; };
   }, [artistId]);
 
@@ -69,9 +55,9 @@ export function useFetchArtist(artistId) {
 }
 
 export function useFetchChart(limit = 20) {
-  const [songs,   setSongs]   = useState([]);
+  const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let cancelled = false;

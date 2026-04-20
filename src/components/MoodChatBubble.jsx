@@ -25,7 +25,7 @@ const moodMap = {
 // Check the user's message for any known mood keyword
 function detectMood(message) {
   const lower = message.toLowerCase();
-  for (const keyword in moodMap) {
+  for (let keyword in moodMap) {
     if (lower.includes(keyword)) {
       return { mood: keyword, query: moodMap[keyword] };
     }
@@ -59,7 +59,7 @@ async function fetchMoodSongs(query) {
 // Quick mood buttons shown in the panel
 const CHIPS = ['😊 Happy', '😌 Chill', '💪 Energetic', '😢 Sad', '🎉 Party', '🎯 Focus'];
 
-// A compact song row inside the chat bubble
+
 function SongCard({ song, onPlay }) {
   const [imgErr, setImgErr] = useState(false);
   return (

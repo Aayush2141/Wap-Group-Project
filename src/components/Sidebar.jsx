@@ -2,103 +2,91 @@ import { NavLink } from 'react-router-dom';
 import { Home, Search, Heart, MessageCircle, Music2, Clock } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
+/* ── CSS animations (replaces framer-motion) ───────────────────────────────── */
 const styles = `
-@keyframes fadeSlideDown {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeSlideLeft {
-  from { opacity: 0; transform: translateX(-10px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-@keyframes scalePop {
-  from { transform: scale(0); }
-  to   { transform: scale(1); }
-}
-.logo-anim     { animation: fadeSlideDown 0.3s ease forwards; }
-.liked-anim    { animation: fadeSlideUp  0.3s ease forwards; }
-.dot-anim      { animation: scalePop     0.2s ease forwards; }
-.recent-item   { animation: fadeSlideLeft 0.25s ease forwards; }
+@keyframes fadeSlideDown  { from { opacity:0; transform:translateY(-10px) } to { opacity:1; transform:translateY(0) } }
+@keyframes fadeSlideUp    { from { opacity:0; transform:translateY( 10px) } to { opacity:1; transform:translateY(0) } }
+@keyframes fadeSlideLeft  { from { opacity:0; transform:translateX(-10px) } to { opacity:1; transform:translateX(0) } }
+@keyframes scalePop       { from { transform:scale(0) }                     to { transform:scale(1) } }
+
+.logo-anim   { animation: fadeSlideDown  0.3s  ease forwards; }
+.liked-anim  { animation: fadeSlideUp    0.3s  ease forwards; }
+.recent-item { animation: fadeSlideLeft  0.25s ease forwards; }
+.dot-anim    { animation: scalePop       0.2s  ease forwards; }
+
 .nav-pill {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   background: rgba(255,255,255,0.08);
   border-radius: 0.75rem;
-  transition: opacity 0.2s ease;
 }
 `;
 
-/* ── Animated nav item ─────────────────────────────────────────────────────── */
+/* ── Single nav link ────────────────────────────────────────────────────────── */
 function NavItem({ to, icon: Icon, label, exact = false }) {
-  function getLinkClass({ isActive }) {
-    let colorClass;
-    if (isActive) {
-      colorClass = 'text-white';
-    } else {
-      colorClass = 'text-[#a7a7a7] hover:text-white';
-    }
-    return `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 ${colorClass}`;
-  }
-
-  function renderContent({ isActive }) {
-    let iconFill;
-    let iconStroke;
-
-    if (isActive) {
-      iconFill = 'currentColor';
-      iconStroke = 2.5;
-    } else {
-      iconFill = 'none';
-      iconStroke = 2;
-    }
-
-    return (
-      <>
-        {isActive && <div className="nav-pill" />}
-        <Icon
-          size={20}
-          className="relative z-10 flex-shrink-0"
-          fill={iconFill}
-          strokeWidth={iconStroke}
-        />
-        <span className="relative z-10">{label}</span>
-        {isActive && (
-          <div className="dot-anim relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-[#1db954]" />
-        )}
-      </>
-    );
-  }
-
   return (
-    <NavLink to={to} end={exact} className={getLinkClass}>
-      {renderContent}
+    <NavLink
+      to={to}
+      end={exact}
+      className={({ isActive }) => {
+        let color;
+        if (isActive) {
+          color = 'text-white';
+        } else {
+          color = 'text-[#a7a7a7] hover:text-white';
+        }
+        return `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 ${color}`;
+      }}
+    >
+      {({ isActive }) => {
+        let iconFill;
+        let iconStroke;
+        if (isActive) {
+          iconFill = 'currentColor';
+          iconStroke = 2.5;
+        } else {
+          iconFill = 'none';
+          iconStroke = 2;
+        }
+
+        return (
+          <>
+            {/* Highlight background when active */}
+            {isActive && <div className="nav-pill" />}
+
+            <Icon size={20} className="relative z-10 flex-shrink-0" fill={iconFill} strokeWidth={iconStroke} />
+            <span className="relative z-10">{label}</span>
+
+            {/* Green dot indicator when active */}
+            {isActive && <div className="dot-anim relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-[#1db954]" />}
+          </>
+        );
+      }}
     </NavLink>
   );
 }
 
-/* ── Recent track item ─────────────────────────────────────────────────────── */
+/* ── One song row in the recently played list ───────────────────────────────── */
 function RecentItem({ song, index }) {
   const { playSong, currentSong, isPlaying } = usePlayer();
   const active = currentSong?.id === song.id;
 
+  // Base class shared by both active and inactive states
+  const baseClass = 'recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group';
   let liClass;
   if (active) {
-    liClass = 'recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group bg-white/8';
+    liClass = baseClass + ' bg-white/8';
   } else {
-    liClass = 'recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group hover:bg-white/5';
+    liClass = baseClass + ' hover:bg-white/5';
   }
 
-  let titleClass;
+  let titleColor;
   if (active) {
-    titleClass = 'text-xs font-semibold truncate leading-tight text-[#1db954]';
+    titleColor = 'text-[#1db954]';
   } else {
-    titleClass = 'text-xs font-semibold truncate leading-tight text-white';
+    titleColor = 'text-white';
   }
 
+  // Show equalizer bars when song is playing, play button on hover otherwise
   let overlay;
   if (active && isPlaying) {
     overlay = (
@@ -111,7 +99,7 @@ function RecentItem({ song, index }) {
   } else {
     overlay = (
       <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z"/></svg>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z" /></svg>
       </div>
     );
   }
@@ -122,6 +110,7 @@ function RecentItem({ song, index }) {
       className={liClass}
       style={{ animationDelay: `${index * 0.05}s`, opacity: 0, animationFillMode: 'forwards' }}
     >
+      {/* Album art with overlay */}
       <div className="relative w-10 h-10 flex-shrink-0">
         <img
           src={song.album?.coverSmall || song.album?.cover}
@@ -130,15 +119,17 @@ function RecentItem({ song, index }) {
         />
         {overlay}
       </div>
+
+      {/* Song title + artist */}
       <div className="overflow-hidden">
-        <p className={titleClass}>{song.title}</p>
+        <p className={`text-xs font-semibold truncate leading-tight ${titleColor}`}>{song.title}</p>
         <p className="text-[11px] text-[#a7a7a7] truncate">{song.artist?.name}</p>
       </div>
     </li>
   );
 }
 
-/* ── Sidebar ───────────────────────────────────────────────────────────────── */
+/* ── Main sidebar ───────────────────────────────────────────────────────────── */
 export default function Sidebar() {
   const { likedSongs, recentlyPlayed } = usePlayer();
 
@@ -146,7 +137,7 @@ export default function Sidebar() {
     <aside className="w-[240px] flex-shrink-0 flex flex-col gap-2 p-2 overflow-hidden bg-[#050505]">
       <style>{styles}</style>
 
-      {/* Logo */}
+      {/* App logo */}
       <div className="logo-anim flex items-center gap-2.5 px-3 py-4">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1db954] to-[#7c3aed] flex items-center justify-center shadow-lg">
           <Music2 size={18} fill="black" className="text-black" />
@@ -157,7 +148,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Main nav */}
+      {/* Navigation links */}
       <nav className="bg-[#111111] rounded-2xl p-2 flex flex-col gap-0.5">
         <NavItem to="/"       icon={Home}          label="Home"        exact />
         <NavItem to="/search" icon={Search}        label="Search" />
@@ -165,13 +156,12 @@ export default function Sidebar() {
         <NavItem to="/liked"  icon={Heart}         label="Liked Songs" />
       </nav>
 
-      {/* Library */}
+      {/* Recently played list */}
       <div className="bg-[#111111] rounded-2xl p-3 flex-1 overflow-y-auto">
+        {/* Header row */}
         <div className="flex items-center gap-2 mb-3 px-1">
           <Clock size={14} className="text-[#535353]" />
-          <span className="text-[#a7a7a7] text-xs font-bold uppercase tracking-wider">
-            Recently Played
-          </span>
+          <span className="text-[#a7a7a7] text-xs font-bold uppercase tracking-wider">Recently Played</span>
           {recentlyPlayed.length > 0 && (
             <span className="ml-auto text-[10px] text-[#535353] bg-white/5 rounded-full px-1.5 py-0.5">
               {recentlyPlayed.length}
@@ -179,11 +169,14 @@ export default function Sidebar() {
           )}
         </div>
 
+        {/* Empty state */}
         {recentlyPlayed.length === 0 && (
           <p className="text-[#535353] text-xs px-1 py-4 text-center leading-relaxed">
             Songs you play<br />will appear here
           </p>
         )}
+
+        {/* Song list */}
         {recentlyPlayed.length > 0 && (
           <ul className="flex flex-col gap-0.5">
             {recentlyPlayed.slice(0, 12).map((song, i) => (
@@ -193,7 +186,7 @@ export default function Sidebar() {
         )}
       </div>
 
-      {/* Liked songs banner */}
+      {/* Liked songs shortcut — only shown when there are liked songs */}
       {likedSongs.length > 0 && (
         <div className="liked-anim">
           <NavLink

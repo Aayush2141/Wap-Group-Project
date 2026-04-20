@@ -37,44 +37,40 @@ const MOOD_MAP = {
 function keywordFallback(text) {
   const lower = text.toLowerCase();
 
-  // Check each keyword in the mood map
+  // Check each keyword in the mood map using simple includes()
   for (const [keyword, data] of Object.entries(MOOD_MAP)) {
     if (lower.includes(keyword)) return data;
   }
 
-  // Extra fuzzy patterns for common phrases
-  if (/feel(ing)?\s+(down|blue|low|bad)/.test(lower))                return MOOD_MAP.sad;
-  if (/need\s+to\s+(focus|study|work|concentrate)/.test(lower))     return MOOD_MAP.study;
-  if (/let'?s?\s+(go|party|dance|celebrate)/.test(lower))           return MOOD_MAP.party;
-  if (/can'?t\s+sleep/.test(lower))                                  return MOOD_MAP.sleep;
-  if (/just\s+(got|been)\s+(dump|broke|cheated|heart)/.test(lower)) return MOOD_MAP.heartbreak;
-  if (/ace[d]?\s+(my|the)\s+exam/.test(lower))                      return MOOD_MAP.excited;
-  if (/in\s+(love|a\s+relationship)/.test(lower))                    return MOOD_MAP.love;
-  if (/late\s+night|night\s+vibes/.test(lower))                     return MOOD_MAP.night;
+  // Extra common phrases — all using simple includes() checks
+  if (lower.includes('feeling down') || lower.includes('feeling blue') || lower.includes('feeling low')) return MOOD_MAP.sad;
+  if (lower.includes('need to focus') || lower.includes('need to study') || lower.includes('need to work')) return MOOD_MAP.study;
+  if (lower.includes("let's party") || lower.includes('lets party') || lower.includes("let's dance")) return MOOD_MAP.party;
+  if (lower.includes("can't sleep") || lower.includes('cannot sleep')) return MOOD_MAP.sleep;
+  if (lower.includes('just got dumped') || lower.includes('just broke up') || lower.includes('got cheated')) return MOOD_MAP.heartbreak;
+  if (lower.includes('aced my exam') || lower.includes('passed my exam')) return MOOD_MAP.excited;
+  if (lower.includes('in love') || lower.includes('in a relationship')) return MOOD_MAP.love;
+  if (lower.includes('late night') || lower.includes('night vibes')) return MOOD_MAP.night;
 
   return null; // no mood detected
 }
 
-// Detects direct artist/song requests like "play some Drake" or "put on Ed Sheeran"
-const DIRECT_PATTERNS = [
-  /(?:wanna|want to|can you|please)?\s*(?:listen to|play|put on|hear|find)\s+(?:some\s+)?(.+)/i,
-  /(?:give me|show me|queue up|add)\s+(?:some\s+)?(.+?)(?:\s+(?:music|songs?|tracks?))?$/i,
-  /(?:i(?:'m|\s+am)\s+in(?:to)?|i love|i like|big fan of)\s+(.+)/i,
-  /^(?:some\s+)?(.+?)\s+(?:music|songs?|tracks?|vibes?)$/i,
-];
-
+// Detects direct artist/song requests like "play Drake" or "play some Ed Sheeran"
 function detectDirectSearch(text) {
-  const cleaned = text.trim().replace(/[!?.]+$/, '');
-  for (const pattern of DIRECT_PATTERNS) {
-    const match = cleaned.match(pattern);
-    if (match) {
-      const query = match[1].trim();
-      // Reject very short or common words — probably not an artist name
-      if (query.length >= 2 && !['a', 'an', 'the', 'me', 'my', 'up', 'on', 'something'].includes(query)) {
-        return query;
-      }
+  const lower = text.toLowerCase().trim();
+
+  // Trigger words that mean the user wants a specific artist or song
+  const triggers = ['play', 'put on', 'listen to', 'i love', 'i like', 'show me', 'give me'];
+
+  for (const trigger of triggers) {
+    if (lower.startsWith(trigger)) {
+      // Everything after the trigger word is the search query
+      const query = text.slice(trigger.length).trim();
+      // Only use it if it's long enough to be a real artist/song name
+      if (query.length >= 2) return query;
     }
   }
+
   return null;
 }
 

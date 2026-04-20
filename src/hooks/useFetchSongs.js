@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetchSongs, fetchArtist, fetchChart } from '../utils/api';
 
+// Searches songs by query with a debounce delay
 export function useFetchSongs(query, limit = 20, debounceMs = 400) {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,25 +15,33 @@ export function useFetchSongs(query, limit = 20, debounceMs = 400) {
     }
 
     let cancelled = false;
+
     const timer = setTimeout(async () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchSongs(query.trim(), limit);
-        if (!cancelled) setSongs(data);
+        const songs = await fetchSongs(query.trim(), limit);
+        if (!cancelled) setSongs(songs);
       } catch (err) {
-        if (!cancelled) { setError(err.message); setSongs([]); }
+        if (!cancelled) {
+          setError(err.message);
+          setSongs([]);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     }, debounceMs);
 
-    return () => { cancelled = true; clearTimeout(timer); };
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [query, limit, debounceMs]);
 
   return { songs, loading, error };
 }
 
+// Fetches a single artist and their songs by artist ID
 export function useFetchArtist(artistId) {
   const [artist, setArtist] = useState(null);
   const [songs, setSongs] = useState([]);
@@ -41,19 +50,32 @@ export function useFetchArtist(artistId) {
 
   useEffect(() => {
     if (!artistId) return;
+
     let cancelled = false;
     setLoading(true);
     setError(null);
+
     fetchArtist(artistId)
-      .then(({ artist, songs }) => { if (!cancelled) { setArtist(artist); setSongs(songs); } })
-      .catch(err => { if (!cancelled) setError(err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .then(({ artist, songs }) => {
+        if (!cancelled) {
+          setArtist(artist);
+          setSongs(songs);
+        }
+      })
+      .catch(err => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
     return () => { cancelled = true; };
   }, [artistId]);
 
   return { artist, songs, loading, error };
 }
 
+// Fetches the top chart songs
 export function useFetchChart(limit = 20) {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,10 +83,18 @@ export function useFetchChart(limit = 20) {
 
   useEffect(() => {
     let cancelled = false;
+
     fetchChart(limit)
-      .then(data => { if (!cancelled) setSongs(data); })
-      .catch(err => { if (!cancelled) setError(err.message); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .then(songs => {
+        if (!cancelled) setSongs(songs);
+      })
+      .catch(err => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
     return () => { cancelled = true; };
   }, [limit]);
 

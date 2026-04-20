@@ -34,34 +34,48 @@ const styles = `
 
 /* ── Animated nav item ─────────────────────────────────────────────────────── */
 function NavItem({ to, icon: Icon, label, exact = false }) {
+  function getLinkClass({ isActive }) {
+    let colorClass;
+    if (isActive) {
+      colorClass = 'text-white';
+    } else {
+      colorClass = 'text-[#a7a7a7] hover:text-white';
+    }
+    return `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 ${colorClass}`;
+  }
+
+  function renderContent({ isActive }) {
+    let iconFill;
+    let iconStroke;
+
+    if (isActive) {
+      iconFill = 'currentColor';
+      iconStroke = 2.5;
+    } else {
+      iconFill = 'none';
+      iconStroke = 2;
+    }
+
+    return (
+      <>
+        {isActive && <div className="nav-pill" />}
+        <Icon
+          size={20}
+          className="relative z-10 flex-shrink-0"
+          fill={iconFill}
+          strokeWidth={iconStroke}
+        />
+        <span className="relative z-10">{label}</span>
+        {isActive && (
+          <div className="dot-anim relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-[#1db954]" />
+        )}
+      </>
+    );
+  }
+
   return (
-    <NavLink
-      to={to}
-      end={exact}
-      className={({ isActive }) =>
-        `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200
-         ${isActive ? 'text-white' : 'text-[#a7a7a7] hover:text-white'}`
-      }
-    >
-      {({ isActive }) => (
-        <>
-          {/* Active pill */}
-          {isActive && <div className="nav-pill" />}
-
-          <Icon
-            size={20}
-            className="relative z-10 flex-shrink-0"
-            fill={isActive ? 'currentColor' : 'none'}
-            strokeWidth={isActive ? 2.5 : 2}
-          />
-          <span className="relative z-10">{label}</span>
-
-          {/* Green dot for active */}
-          {isActive && (
-            <div className="dot-anim relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-[#1db954]" />
-          )}
-        </>
-      )}
+    <NavLink to={to} end={exact} className={getLinkClass}>
+      {renderContent}
     </NavLink>
   );
 }
@@ -71,11 +85,41 @@ function RecentItem({ song, index }) {
   const { playSong, currentSong, isPlaying } = usePlayer();
   const active = currentSong?.id === song.id;
 
+  let liClass;
+  if (active) {
+    liClass = 'recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group bg-white/8';
+  } else {
+    liClass = 'recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group hover:bg-white/5';
+  }
+
+  let titleClass;
+  if (active) {
+    titleClass = 'text-xs font-semibold truncate leading-tight text-[#1db954]';
+  } else {
+    titleClass = 'text-xs font-semibold truncate leading-tight text-white';
+  }
+
+  let overlay;
+  if (active && isPlaying) {
+    overlay = (
+      <div className="absolute inset-0 rounded-lg bg-black/50 flex items-center justify-center gap-0.5">
+        <span className="eq-bar" style={{ height: 8 }} />
+        <span className="eq-bar" style={{ height: 14 }} />
+        <span className="eq-bar" style={{ height: 8 }} />
+      </div>
+    );
+  } else {
+    overlay = (
+      <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z"/></svg>
+      </div>
+    );
+  }
+
   return (
     <li
       onClick={() => playSong(song)}
-      className={`recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group
-        ${active ? 'bg-white/8' : 'hover:bg-white/5'}`}
+      className={liClass}
       style={{ animationDelay: `${index * 0.05}s`, opacity: 0, animationFillMode: 'forwards' }}
     >
       <div className="relative w-10 h-10 flex-shrink-0">
@@ -84,22 +128,10 @@ function RecentItem({ song, index }) {
           alt={song.title}
           className="w-10 h-10 rounded-lg object-cover"
         />
-        {active && isPlaying ? (
-          <div className="absolute inset-0 rounded-lg bg-black/50 flex items-center justify-center gap-0.5">
-            <span className="eq-bar" style={{ height: 8 }} />
-            <span className="eq-bar" style={{ height: 14 }} />
-            <span className="eq-bar" style={{ height: 8 }} />
-          </div>
-        ) : (
-          <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z"/></svg>
-          </div>
-        )}
+        {overlay}
       </div>
       <div className="overflow-hidden">
-        <p className={`text-xs font-semibold truncate leading-tight ${active ? 'text-[#1db954]' : 'text-white'}`}>
-          {song.title}
-        </p>
+        <p className={titleClass}>{song.title}</p>
         <p className="text-[11px] text-[#a7a7a7] truncate">{song.artist?.name}</p>
       </div>
     </li>
@@ -147,11 +179,12 @@ export default function Sidebar() {
           )}
         </div>
 
-        {recentlyPlayed.length === 0 ? (
+        {recentlyPlayed.length === 0 && (
           <p className="text-[#535353] text-xs px-1 py-4 text-center leading-relaxed">
             Songs you play<br />will appear here
           </p>
-        ) : (
+        )}
+        {recentlyPlayed.length > 0 && (
           <ul className="flex flex-col gap-0.5">
             {recentlyPlayed.slice(0, 12).map((song, i) => (
               <RecentItem key={song.id} song={song} index={i} />
@@ -174,7 +207,7 @@ export default function Sidebar() {
             </div>
             <div className="overflow-hidden">
               <p className="text-white text-xs font-bold">Liked Songs</p>
-              <p className="text-[#a7a7a7] text-[11px]">{likedSongs.length} song{likedSongs.length !== 1 ? 's' : ''}</p>
+              <p className="text-[#a7a7a7] text-[11px]">{likedSongs.length} song{likedSongs.length !== 1 && 's'}</p>
             </div>
           </NavLink>
         </div>

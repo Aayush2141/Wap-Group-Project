@@ -46,7 +46,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [query, setQuery] = useState('');
-
+  
   const handleChange = (e) => {
     const val = e.target.value;
     setQuery(val);

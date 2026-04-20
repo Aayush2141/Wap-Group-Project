@@ -57,13 +57,13 @@ export default function Navbar() {
     setQuery(val);
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
-      if (val.trim()) navigate(`/search?q=${encodeURIComponent(val.trim())}`);
+      if (val.trim()) navigate(`/search?q=${val.trim()}`);
     }, 420);
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && query.trim())
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+      navigate(`/search?q=${query.trim()}`);
     if (e.key === 'Escape') { setQuery(''); inputRef.current?.blur(); }
   };
 

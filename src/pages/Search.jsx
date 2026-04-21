@@ -134,13 +134,19 @@ function SearchResults({ query }) {
       )}
       {/* Songs section */}
 
-      <section>
-        {!loading && songs.length > 0 && (
-          <h2 className="text-lg font-bold text-white mb-4">Songs</h2>
-        )}
-        <SongGrid songs={songs} loading={loading} skeletonCount={15} />
+    <section>
+  {songs.length > 0 && !loading && (
+    <h2 className="text-lg font-bold text-white mb-4">
+      Songs
+    </h2>
+  )}
 
-      </section>
+  <SongGrid
+    songs={songs}
+    loading={loading}
+    skeletonCount={15}
+  />
+</section>
     </div>
   );
 }

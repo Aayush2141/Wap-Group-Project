@@ -54,9 +54,19 @@ export default function Navbar() {
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && query.trim()) navigate(`/search?q=${query.trim()}`);
-    if (e.key === 'Escape') setQuery('');
-  };
+  const trimmedQuery = query.trim();
+
+  if (e.key === 'Enter') {
+    if (trimmedQuery) {
+      navigate(`/search?q=${trimmedQuery}`);
+    }
+    return;
+  }
+
+  if (e.key === 'Escape') {
+    setQuery('');
+  }
+};
 
   return (
     <>

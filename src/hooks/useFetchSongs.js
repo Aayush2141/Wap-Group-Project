@@ -7,13 +7,12 @@ export function useFetchSongs(query, limit = 20, debounceMs = 400) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!query || !query.trim()) {
-      setSongs([]);
-      setLoading(false);
-      return;
-    }
-
+useEffect(() => {
+  if (!query?.trim()) {
+    setSongs([]);
+    setLoading(false);
+    return;
+  }
     let cancelled = false;
 
     const timer = setTimeout(async () => {

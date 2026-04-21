@@ -68,7 +68,9 @@ function NavItem({ to, icon: Icon, label, exact = false }) {
 /* ── One song row in the recently played list ───────────────────────────────── */
 function RecentItem({ song, index }) {
   const { playSong, currentSong, isPlaying } = usePlayer();
-  const active = currentSong?.id === song.id;
+
+  const isActive = currentSong?.id === song.id;
+}
 
   // Base class shared by both active and inactive states
   const baseClass = 'recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group';

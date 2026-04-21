@@ -7,19 +7,19 @@ import { usePlayer } from '../context/PlayerContext';
 
 // Maps mood keywords to Deezer search queries
 const moodMap = {
-  happy:      'happy pop upbeat',
-  sad:        'sad emotional acoustic',
-  energetic:  'workout energy hype',
-  chill:      'chill lofi relax',
-  focus:      'focus study instrumental',
-  party:      'party dance hits',
+  happy: 'happy pop upbeat',
+  sad: 'sad emotional acoustic',
+  energetic: 'workout energy hype',
+  chill: 'chill lofi relax',
+  focus: 'focus study instrumental',
+  party: 'party dance hits',
   heartbreak: 'heartbreak breakup',
-  motivated:  'motivation pump up',
-  sleepy:     'sleep calm peaceful',
-  angry:      'rage metal intense',
-  romantic:   'romantic love songs',
-  nostalgic:  'nostalgic 90s throwback',
-  night:      'late night chill ambient',
+  motivated: 'motivation pump up',
+  sleepy: 'sleep calm peaceful',
+  angry: 'rage metal intense',
+  romantic: 'romantic love songs',
+  nostalgic: 'nostalgic 90s throwback',
+  night: 'late night chill ambient',
 };
 
 // Check the user's message for any known mood keyword
@@ -36,21 +36,21 @@ function detectMood(message) {
 // Fetch 4 songs from Deezer (via CORS proxy) based on a mood query
 async function fetchMoodSongs(query) {
   const deezerUrl = `https://api.deezer.com/search?q=${encodeURIComponent(query)}&limit=4`;
-  const proxyUrl  = `https://api.allorigins.win/raw?url=${encodeURIComponent(deezerUrl)}`;
-  const response  = await fetch(proxyUrl);
-  const data      = await response.json();
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(deezerUrl)}`;
+  const response = await fetch(proxyUrl);
+  const data = await response.json();
 
   return (data.data || []).map(t => ({
-    id:       t.id,
-    title:    t.title,
-    preview:  t.preview,
-    cover:    t.album?.cover_medium || t.album?.cover_small || null,
-    artist:   { id: t.artist?.id || null, name: t.artist?.name || 'Unknown' },
-    album:    {
+    id: t.id,
+    title: t.title,
+    preview: t.preview,
+    cover: t.album?.cover_medium || t.album?.cover_small || null,
+    artist: { id: t.artist?.id || null, name: t.artist?.name || 'Unknown' },
+    album: {
       id: t.album?.id || null, title: t.album?.title || '',
       cover: t.album?.cover_medium || null,
       coverSmall: t.album?.cover_small || null,
-      coverLarge: t.album?.cover_big  || null,
+      coverLarge: t.album?.cover_big || null,
     },
     duration: t.duration || 30,
   }));
@@ -76,7 +76,7 @@ function SongCard({ song, onPlay }) {
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2">
-              <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
             </svg>
           </div>
         )}
@@ -95,7 +95,7 @@ function SongCard({ song, onPlay }) {
           opacity-0 group-hover:opacity-100 transition-all hover:bg-[#1ed760] hover:scale-110"
         aria-label="Play song"
       >
-        <svg width="9" height="10" viewBox="0 0 9 10" fill="white"><path d="M1 1.5l7 3.5-7 3.5V1.5z"/></svg>
+        <svg width="9" height="10" viewBox="0 0 9 10" fill="white"><path d="M1 1.5l7 3.5-7 3.5V1.5z" /></svg>
       </button>
     </div>
   );
@@ -108,7 +108,7 @@ function BotBubble({ msg }) {
       <div className="w-6 h-6 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center"
         style={{ background: 'linear-gradient(135deg, #1db954, #7b2fbe)', boxShadow: '0 0 8px rgba(29,185,84,0.35)' }}>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
-          <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+          <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
         </svg>
       </div>
       <div className="flex-1 min-w-0">
@@ -138,22 +138,20 @@ function UserBubble({ msg }) {
   );
 }
 
-// The main floating chat widget
 export default function MoodChatBubble() {
-  // We use context here to access playSong
   const { playSong } = usePlayer();
 
-  const [isOpen,      setIsOpen]      = useState(false);
-  const [messages,    setMessages]    = useState([{
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([{
     id: 'welcome', role: 'bot',
     text: "Hey! 👋 Tell me how you're feeling and I'll find the perfect songs. Try 'I'm feeling chill' or tap a mood below.",
   }]);
-  const [inputValue,  setInputValue]  = useState('');
-  const [isLoading,   setIsLoading]   = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
 
   const messagesEndRef = useRef(null);
-  const inputRef       = useRef(null);
+  const inputRef = useRef(null);
 
   // Auto-scroll to latest message whenever messages change
   useEffect(() => {
@@ -207,8 +205,8 @@ export default function MoodChatBubble() {
     setIsLoading(false);
   };
 
-  const handleSend    = () => processMessage(inputValue);
-  const handleChip    = (chip) => processMessage(chip.replace(/^[^\s]+\s/, '')); // strip emoji prefix
+  const handleSend = () => processMessage(inputValue);
+  const handleChip = (chip) => processMessage(chip.replace(/^[^\s]+\s/, '')); // strip emoji prefix
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
@@ -225,9 +223,9 @@ export default function MoodChatBubble() {
           boxShadow: isOpen
             ? '0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(29,185,84,0.2), inset 0 1px 0 rgba(255,255,255,0.06)'
             : 'none',
-          transform:    isOpen ? 'translateY(0) scale(1)'    : 'translateY(16px) scale(0.96)',
-          opacity:      isOpen ? 1                            : 0,
-          pointerEvents: isOpen ? 'all'                      : 'none',
+          transform: isOpen ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.96)',
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? 'all' : 'none',
           transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease',
           transformOrigin: 'bottom right',
         }}
@@ -239,7 +237,7 @@ export default function MoodChatBubble() {
             <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ background: 'linear-gradient(135deg, #1db954, #7b2fbe, #1db954)', backgroundSize: '200% 200%', animation: 'gradientShift 4s ease infinite', boxShadow: '0 4px 16px rgba(29,185,84,0.3)' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
               </svg>
             </div>
             <div>
@@ -254,7 +252,7 @@ export default function MoodChatBubble() {
             className="w-7 h-7 rounded-full flex items-center justify-center text-[#a7a7a7] hover:text-white transition-colors hover:bg-white/8"
             aria-label="Close">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M1 1l10 10M11 1L1 11"/>
+              <path d="M1 1l10 10M11 1L1 11" />
             </svg>
           </button>
         </div>
@@ -278,7 +276,7 @@ export default function MoodChatBubble() {
           {messages.map(msg =>
             msg.role === 'user'
               ? <UserBubble key={msg.id} msg={msg} />
-              : <BotBubble  key={msg.id} msg={msg} />
+              : <BotBubble key={msg.id} msg={msg} />
           )}
 
           {/* Typing indicator */}
@@ -287,7 +285,7 @@ export default function MoodChatBubble() {
               <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center"
                 style={{ background: 'linear-gradient(135deg, #1db954, #7b2fbe)' }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="white">
-                  <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                  <path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
                 </svg>
               </div>
               <div className="flex items-center gap-1 rounded-2xl rounded-tl-sm px-4 py-3"
@@ -322,12 +320,12 @@ export default function MoodChatBubble() {
               transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 active:scale-90"
             style={{
               background: inputValue.trim() && !isLoading ? 'linear-gradient(135deg, #1db954, #15a347)' : 'rgba(255,255,255,0.1)',
-              boxShadow:  inputValue.trim() && !isLoading ? '0 4px 16px rgba(29,185,84,0.4)' : 'none',
+              boxShadow: inputValue.trim() && !isLoading ? '0 4px 16px rgba(29,185,84,0.4)' : 'none',
             }}
             aria-label="Send"
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path d="M1.5 6.5h10M7 2l5 4.5L7 11" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1.5 6.5h10M7 2l5 4.5L7 11" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>
@@ -345,7 +343,7 @@ export default function MoodChatBubble() {
           style={{
             background: 'rgba(18,18,18,0.95)', border: '1px solid rgba(255,255,255,0.1)',
             boxShadow: '0 8px 24px rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)',
-            opacity:   showTooltip && !isOpen ? 1 : 0,
+            opacity: showTooltip && !isOpen ? 1 : 0,
             transform: showTooltip && !isOpen ? 'translateX(0) scale(1)' : 'translateX(8px) scale(0.95)',
             transition: 'opacity 0.2s ease, transform 0.2s ease', whiteSpace: 'nowrap',
           }}>
@@ -373,8 +371,8 @@ export default function MoodChatBubble() {
           {/* Icon rotates between X (open) and music note (closed) */}
           <div style={{ transition: 'transform 0.3s ease', transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)' }}>
             {isOpen
-              ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round"><path d="M1 1l12 12M13 1L1 13"/></svg>
-              : <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/></svg>
+              ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round"><path d="M1 1l12 12M13 1L1 13" /></svg>
+              : <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" /></svg>
             }
           </div>
 

@@ -41,7 +41,6 @@ export function useFetchSongs(query, limit = 20, debounceMs = 400) {
   return { songs, loading, error };
 }
 
-// Fetches a single artist and their songs by artist ID
 export function useFetchArtist(artistId) {
   const [artist, setArtist] = useState(null);
   const [songs, setSongs] = useState([]);

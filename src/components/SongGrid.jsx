@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import SongCard, { SongCardSkeleton } from './SongCard';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 
-/* ── Grid layout ───────────────────────────────────────────────────────────── */
+// Grid layout 
 export default function SongGrid({ songs = [], loading = false, skeletonCount = 10, title }) {
   return (
     <section>
@@ -20,8 +20,7 @@ export default function SongGrid({ songs = [], loading = false, skeletonCount = 
     </section>
   );
 }
-
-/* ── Horizontal scroll carousel ───────────────────────────────────────────── */
+//  / Horizontal scroll carousel 
 export function SongCarousel({ songs = [], loading = false, skeletonCount = 8, title, onShowAll }) {
   const scrollRef = useRef(null);
 

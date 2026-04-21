@@ -279,7 +279,6 @@ export default function MoodChatBubble() {
               : <BotBubble key={msg.id} msg={msg} />
           )}
 
-          {/* Typing indicator */}
           {isLoading && (
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center"

@@ -93,6 +93,23 @@ function SongResultRow({ song, onPlay }) {
   const [imgErr, setImgErr] = useState(false);
   const cover = song.cover || song.album?.cover || song.album?.coverSmall;
 
+  let displayImage = (
+    <div className="w-full h-full flex items-center justify-center">
+      <Music2 size={14} className="text-[#555]" />
+    </div>
+  );
+
+  if (cover && !imgErr) {
+    displayImage = (
+      <img
+        src={cover}
+        alt={song.title}
+        className="w-full h-full object-cover"
+        onError={() => setImgErr(true)}
+      />
+    );
+  }
+
   return (
     <div
       onClick={() => onPlay(song)}
@@ -102,18 +119,7 @@ function SongResultRow({ song, onPlay }) {
     >
       {/* album cover — falls back to a music icon if it fails to load */}
       <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#282828]">
-        {cover && !imgErr ? (
-          <img
-            src={cover}
-            alt={song.title}
-            className="w-full h-full object-cover"
-            onError={() => setImgErr(true)}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Music2 size={14} className="text-[#555]" />
-          </div>
-        )}
+        {displayImage}
       </div>
 
       {/* song name + who made it */}
@@ -258,7 +264,7 @@ export default function MoodChat() {
       setMessages(prev => [...prev, {
         id: Date.now() + 1, role: 'bot',
         text: `${moodData.emoji} ${moodData.response}`,
-        songs: songs.length > 0 ? songs : [],
+        songs: songs,
         onPlay,
       }]);
     } catch {
@@ -286,6 +292,14 @@ export default function MoodChat() {
       text: "Hey! 👋 Tell me how you're feeling and I'll find the perfect songs.",
     }]);
   };
+
+  let sendButtonBg = 'rgba(255,255,255,0.08)';
+  let sendButtonShadow = 'none';
+
+  if (inputValue.trim() && !isLoading) {
+    sendButtonBg = 'linear-gradient(135deg, #1db954, #15a347)';
+    sendButtonShadow = '0 4px 16px rgba(29,185,84,0.4)';
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -338,11 +352,12 @@ export default function MoodChat() {
 
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4" style={{ scrollbarWidth: 'thin', scrollbarColor: '#2a2a2a transparent' }}>
-        {messages.map(msg =>
-          msg.role === 'user'
-            ? <UserMessage key={msg.id} msg={msg} />
-            : <BotMessage  key={msg.id} msg={msg} />
-        )}
+        {messages.map(msg => {
+          if (msg.role === 'user') {
+            return <UserMessage key={msg.id} msg={msg} />;
+          }
+          return <BotMessage key={msg.id} msg={msg} />;
+        })}
 
         {/* Typing indicator — shown while fetching songs */}
         {isLoading && (
@@ -400,10 +415,8 @@ export default function MoodChat() {
             transition-all disabled:opacity-30 disabled:cursor-not-allowed
             hover:scale-105 active:scale-95"
           style={{
-            background: inputValue.trim() && !isLoading
-              ? 'linear-gradient(135deg, #1db954, #15a347)'
-              : 'rgba(255,255,255,0.08)',
-            boxShadow: inputValue.trim() && !isLoading ? '0 4px 16px rgba(29,185,84,0.4)' : 'none',
+            background: sendButtonBg,
+            boxShadow: sendButtonShadow,
           }}
           aria-label="Send"
         >

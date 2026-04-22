@@ -74,6 +74,8 @@ export function useFetchArtist(artistId) {
 }
 
 // Fetches the top chart songs
+import { useState, useEffect } from "react";
+
 export function useFetchChart(limit = 20) {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -82,18 +84,20 @@ export function useFetchChart(limit = 20) {
   useEffect(() => {
     let cancelled = false;
 
-    fetchChart(limit)
-      .then(songs => {
-        if (!cancelled) setSongs(songs);
-      })
-      .catch(err => {
+    const getSongs = async () => {
+      try {
+        const data = await fetchChart(limit);
+        if (!cancelled) setSongs(data);
+      } catch (err) {
         if (!cancelled) setError(err.message);
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
 
-    return () => { cancelled = true; };
+    getSongs();
+
+    return () => (cancelled = true);
   }, [limit]);
 
   return { songs, loading, error };

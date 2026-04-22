@@ -1,301 +1,246 @@
-// PlayerContext.jsx
-// This file creates a "shared box" (context) that every component can read from.
-// It holds: which song is playing, the audio player, liked songs, recently played, etc.
+// WHAT THIS FILE DOES:
+// Creates shared music player state (context) that every component can access.
+// Handles audio playback, liked songs, recently played — all with simple React hooks.
 
 import { createContext, useContext, useState, useRef, useEffect } from 'react';
 
-// Step 1: Create the context — think of it as an empty shared box
-const PlayerContext = createContext(null);
-
-// ── localStorage helpers ──────────────────────────────────────────────────────
-// These two functions safely read/write data to the browser's localStorage.
-const ls = {
-  // get: reads a value from localStorage. If nothing is there, return the fallback (fb).
-  get: (k, fb) => {
-    try { return JSON.parse(localStorage.getItem(k)) ?? fb; }
-    catch { return fb; }
-  },
-  // set: saves a value to localStorage as a JSON string.
-  set: (k, v) => {
-    try { localStorage.setItem(k, JSON.stringify(v)); }
-    catch {}
-  },
-};
-
-// ── time formatter ────────────────────────────────────────────────────────────
-// Converts seconds (e.g. 125) into "2:05" format for display.
+// Converts seconds (e.g. 125) to "2:05" format for display in the player bar
 export function fmt(secs) {
   if (!secs || isNaN(secs)) return '0:00';
-  const m = Math.floor(secs / 60);                          // get minutes
-  const s = Math.floor(secs % 60).toString().padStart(2, '0'); // get seconds, pad to 2 digits
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
 }
 
-// ── PlayerProvider ────────────────────────────────────────────────────────────
-// This component wraps the whole app and shares all music state.
+// Step 1: Create the context — an empty shared box every component can read from
+const PlayerContext = createContext(null);
+
 export function PlayerProvider({ children }) {
-  // useRef creates a reference to the <audio> HTML element — persists across re-renders
-  const audioRef = useRef(null);
+  // useRef holds the Audio object across renders without causing re-renders
+  const audioRef = useRef(new Audio());
 
-  // ── core state ────────────────────────────────────────────────────────────
-  // useState stores a value AND a function to update it
-  const [currentSong, setCurrentSong] = useState(null);      // the song currently loaded
-  const [queue,       setQueue]       = useState([]);         // list of songs in the queue
-  const [queueIndex,  setQueueIndex]  = useState(0);         // which position we're at in the queue
-  const [isPlaying,   setIsPlaying]   = useState(false);     // true = playing, false = paused
-  const [progress,    setProgress]    = useState(0);         // 0–100, how far through the song
-  const [duration,    setDuration]    = useState(0);         // total length of song in seconds
-  const [volume,      setVolume]      = useState(() => ls.get('volume', 0.75)); // 0.0–1.0 volume
-  const [isMuted,     setIsMuted]     = useState(false);     // whether the user muted the audio
-  const [isExpanded,  setIsExpanded]  = useState(false);     // whether the big player overlay is open
-  const [isShuffling, setIsShuffling] = useState(false);
-  const [repeatMode, setRepeatMode] = useState('off'); // 'off' | 'one' | 'all'
+  // --- Core player state ---
+  const [currentSong,  setCurrentSong]  = useState(null);
+  const [isPlaying,    setIsPlaying]    = useState(false);
+  const [progress,     setProgress]     = useState(0);    // 0–100, how far through the song
+  const [duration,     setDuration]     = useState(0);    // total length in seconds
+  const [isExpanded,   setIsExpanded]   = useState(false); // full-screen player open?
 
-  // ── persisted state ───────────────────────────────────────────────────────
-  // Helper: rejects old Deezer-format songs that have dead CDN links
-  const isValidSong = (s) => {
-    const cover   = s?.cover || s?.album?.cover || s?.album?.coverSmall || '';
-    const preview = s?.preview || '';
-    // Deezer CDN URLs contain 'dzcdn.net' — they no longer work after switching to iTunes
-    return !cover.includes('dzcdn.net') && !preview.includes('dzcdn');
-  };
+  // Read saved volume from localStorage, default to 0.75
+  const [volume,  setVolume]  = useState(() => parseFloat(localStorage.getItem('volume') || '0.75'));
+  const [isMuted, setIsMuted] = useState(false);
 
-  // Load liked songs from localStorage on first render, filtering out stale Deezer tracks
-  const [likedSongs,     setLikedSongs]     = useState(() => ls.get('likedSongs', []).filter(isValidSong));
-  // Load recently played from localStorage on first render
-  const [recentlyPlayed, setRecentlyPlayed] = useState(() => ls.get('recentlyPlayed', []).filter(isValidSong));
-  // Load mood chat history from localStorage on first render
-  const [moodHistory,    setMoodHistory]    = useState(() => ls.get('moodHistory', []));
+  // Simple array of songs — used so next/prev buttons know what to play
+  const [currentQueue, setCurrentQueue] = useState([]);
 
-  // This runs when likedSongs changes. It saves liked songs to localStorage.
-  useEffect(() => { ls.set('likedSongs', likedSongs); }, [likedSongs]);
-  // This runs when recentlyPlayed changes. It saves it to localStorage.
-  useEffect(() => { ls.set('recentlyPlayed', recentlyPlayed); }, [recentlyPlayed]);
-  // This runs when moodHistory changes. It saves it to localStorage.
-  useEffect(() => { ls.set('moodHistory', moodHistory); }, [moodHistory]);
-  // This runs when volume changes. It saves the volume preference to localStorage.
-  useEffect(() => { ls.set('volume', volume); }, [volume]);
+  // --- Persisted state — read from localStorage on first load ---
 
-  // ── audio event wiring ────────────────────────────────────────────────────
-  // This runs when the queue or queueIndex changes. It wires up audio event listeners.
+  // Read saved liked songs from localStorage
+  const [likedSongs, setLikedSongs] = useState(() => {
+    return JSON.parse(localStorage.getItem('likedSongs') || '[]');
+  });
+
+  // Read saved recently played songs from localStorage
+  const [recentlyPlayed, setRecentlyPlayed] = useState(() => {
+    return JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
+  });
+
+  // Save liked songs to localStorage whenever they change
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    localStorage.setItem('likedSongs', JSON.stringify(likedSongs));
+  }, [likedSongs]);
 
-    // onTime: fires every ~250ms while playing. Updates the progress bar.
-    const onTime  = () => audio.duration && setProgress((audio.currentTime / audio.duration) * 100);
-    // onMeta: fires when the browser knows the audio duration. Saves the duration.
-    const onMeta  = () => setDuration(audio.duration);
-    // onEnded: fires when the song finishes. Skips to the next song.
-    const onEnded = () => skipNext();
-
-    audio.addEventListener('timeupdate',     onTime);
-    audio.addEventListener('loadedmetadata', onMeta);
-    audio.addEventListener('ended',          onEnded);
-
-    // Cleanup: remove listeners when this effect re-runs or component unmounts
-    return () => {
-      audio.removeEventListener('timeupdate',     onTime);
-      audio.removeEventListener('loadedmetadata', onMeta);
-      audio.removeEventListener('ended',          onEnded);
-    };
-  }, [queue, queueIndex]); // re-bind whenever queue changes
-
-  // This runs when volume or isMuted changes. It updates the audio element's volume.
+  // Save recently played to localStorage whenever it changes
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume;
+    localStorage.setItem('recentlyPlayed', JSON.stringify(recentlyPlayed));
+  }, [recentlyPlayed]);
+
+  // Update the audio volume whenever volume or mute state changes
+  useEffect(() => {
+    audioRef.current.volume = isMuted ? 0 : volume;
+    // Save volume preference to localStorage
+    localStorage.setItem('volume', String(volume));
   }, [volume, isMuted]);
 
-  // This runs when isPlaying or currentSong changes. It plays or pauses the audio.
+  // Wire up audio events to track progress/duration/song-end
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !currentSong) return;
+
+    // Runs every ~250ms while the song plays — updates the progress bar
+    function handleTimeUpdate() {
+      if (audio.duration) {
+        setProgress((audio.currentTime / audio.duration) * 100);
+      }
+    }
+
+    // Runs when the browser knows the song's total duration
+    function handleMetadata() {
+      setDuration(audio.duration);
+    }
+
+    // When a song ends, automatically play the next one in the queue
+    function handleEnded() {
+      if (currentQueue.length > 0) {
+        const idx     = currentQueue.findIndex(s => s.id === currentSong?.id);
+        const nextIdx = (idx + 1) % currentQueue.length;
+        const next    = currentQueue[nextIdx];
+        if (next?.preview) {
+          audio.src = next.preview;
+          audio.load();
+          setCurrentSong(next);
+          setIsPlaying(true);
+          setProgress(0);
+          setDuration(0);
+          // Add to recently played when auto-skipping
+          setRecentlyPlayed(prev =>
+            [next, ...prev.filter(s => s.id !== next.id)].slice(0, 10)
+          );
+        }
+      }
+    }
+
+    audio.addEventListener('timeupdate',     handleTimeUpdate);
+    audio.addEventListener('loadedmetadata', handleMetadata);
+    audio.addEventListener('ended',          handleEnded);
+
+    // Cleanup: remove listeners before next effect run or component unmount
+    return () => {
+      audio.removeEventListener('timeupdate',     handleTimeUpdate);
+      audio.removeEventListener('loadedmetadata', handleMetadata);
+      audio.removeEventListener('ended',          handleEnded);
+    };
+  }, [currentQueue, currentSong]); // re-run when queue or current song changes
+
+  // Play or pause audio whenever isPlaying or currentSong changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!currentSong) return;
 
     if (isPlaying) {
-      // Wrap in async/await — browsers may reject play() before audio is ready
-      const attemptPlay = async () => {
+      // Browsers require async for the play() call
+      const tryPlay = async () => {
         try {
           await audio.play();
         } catch (err) {
-          // AbortError = another play() interrupted this one (safe to ignore)
-          // NotAllowedError = autoplay blocked by browser (user must interact first)
+          // AbortError is normal (interrupted by another play) — ignore it
           if (err.name !== 'AbortError') setIsPlaying(false);
         }
       };
-      // If audio is already loaded enough, play immediately; otherwise wait for canplay event
+      // If audio is ready, play; otherwise wait for the canplay event
       if (audio.readyState >= 2) {
-        attemptPlay();
+        tryPlay();
       } else {
-        audio.addEventListener('canplay', attemptPlay, { once: true });
+        audio.addEventListener('canplay', tryPlay, { once: true });
       }
     } else {
       audio.pause();
     }
   }, [isPlaying, currentSong]);
 
-  // ── keyboard shortcuts ───────────────────────────────────────────────────
-  // This runs once (empty deps). It listens for global keyboard shortcuts.
-  useEffect(() => {
-    const handler = (e) => {
-      // Don't intercept keyboard shortcuts while typing in a text input
-      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-      switch (e.code) {
-        case 'Space':
-          e.preventDefault();
-          if (currentSong) setIsPlaying(p => !p); // toggle play/pause with Space
-          break;
-        case 'ArrowRight':
-          if (e.altKey) { e.preventDefault(); skipNext(); } // Alt+Right = next track
-          break;
-        case 'ArrowLeft':
-          if (e.altKey) { e.preventDefault(); skipPrev(); } // Alt+Left = prev track
-          break;
-        case 'KeyM':
-          setIsMuted(m => !m); // M = toggle mute
-          break;
-        default: break;
-      }
-    };
-    window.addEventListener('keydown', handler);
-    // Cleanup: remove listener when component unmounts
-    return () => window.removeEventListener('keydown', handler);
-  }, [currentSong]); // eslint-disable-line
-
-  // ── internal: load a track into the audio element ───────────────────────
-  // loadSong sets the audio src, loads it, and updates recentlyPlayed.
-  function loadSong(song) {
+  // Play a song — optionally pass a queue so next/prev buttons work
+  function playSong(song, queue = []) {
     if (!song?.preview) return; // no preview URL = can't play
-    const audio = audioRef.current;
 
-    // IMPORTANT: set src BEFORE calling load() — required for all browsers
+    const audio = audioRef.current;
     audio.src = song.preview;
     audio.load();
 
     setCurrentSong(song);
-    setProgress(0);   // reset progress bar
-    setDuration(0);   // reset duration
+    setIsPlaying(true);
+    setProgress(0);
+    setDuration(0);
 
-    // Add to recently played, removing duplicates, keeping max 30 items
-    setRecentlyPlayed(prev =>
-      [song, ...prev.filter(s => s.id !== song.id)].slice(0, 30)
-    );
-  }
-
-  // ── public API ────────────────────────────────────────────────────────────
-  // playSong: loads and plays a song. Optionally sets a new queue.
-  function playSong(song, newQueue = null) {
-    if (newQueue?.length) {
-      setQueue(newQueue);
-      const idx = newQueue.findIndex(s => s.id === song.id); // find song position in queue
-      setQueueIndex(idx >= 0 ? idx : 0);
+    // Save the queue array so next/prev know which songs to play
+    if (queue.length > 0) {
+      setCurrentQueue(queue);
     }
-    loadSong(song);
-    setIsPlaying(true); // start playing immediately
+
+    // Add to recently played — remove duplicates, keep the last 10
+    const updated = [song, ...recentlyPlayed.filter(s => s.id !== song.id)].slice(0, 10);
+    setRecentlyPlayed(updated);
   }
 
-  // togglePlay: flips isPlaying between true and false
+  // Toggle between playing and paused
   function togglePlay() {
-    setIsPlaying(p => !p);
+    setIsPlaying(prev => !prev);
   }
 
-  // seekTo: jumps to a specific position in the song (0–100 percentage)
+  // Skip to the next song in the queue
+  function skipNext() {
+    if (!currentQueue.length) return;
+    const idx     = currentQueue.findIndex(s => s.id === currentSong?.id);
+    const nextIdx = (idx + 1) % currentQueue.length;
+    playSong(currentQueue[nextIdx], currentQueue);
+  }
+
+  // Go to previous song — or restart current song if more than 3 seconds in
+  function skipPrev() {
+    const audio = audioRef.current;
+    if (audio.currentTime > 3) {
+      audio.currentTime = 0; // restart the current song
+      return;
+    }
+    if (!currentQueue.length) return;
+    const idx     = currentQueue.findIndex(s => s.id === currentSong?.id);
+    const prevIdx = (idx - 1 + currentQueue.length) % currentQueue.length;
+    playSong(currentQueue[prevIdx], currentQueue);
+  }
+
+  // Jump to a specific position in the song — pct is 0 to 100
   function seekTo(pct) {
     const audio = audioRef.current;
     if (audio?.duration) {
-      audio.currentTime = (pct / 100) * audio.duration; // convert % to seconds
+      audio.currentTime = (pct / 100) * audio.duration;
       setProgress(pct);
     }
   }
 
-  // skipNext: moves to the next song in the queue
-function skipNext() {
-  if (!queue.length) return;
-
-  let next;
-
-  if (isShuffling) {
-    next = Math.floor(Math.random() * queue.length);
-  } else {
-    next = (queueIndex + 1) % queue.length;
-  }
-
-  setQueueIndex(next);
-  loadSong(queue[next]);
-  setIsPlaying(true);
-}
-
-  // skipPrev: if we're past 3 seconds, restart; otherwise go to previous song
-  function skipPrev() {
-    const audio = audioRef.current;
-    if (audio && audio.currentTime > 3) { audio.currentTime = 0; return; }
-    if (!queue.length) return;
-    const prev = (queueIndex - 1 + queue.length) % queue.length; // wrap around if at start
-    setQueueIndex(prev);
-    loadSong(queue[prev]);
-    setIsPlaying(true);
-  }
-
-  // toggleLike: adds or removes a song from likedSongs
+  // Add or remove a song from liked songs
   function toggleLike(song) {
-    setLikedSongs(prev =>
-      prev.some(s => s.id === song.id)
-        ? prev.filter(s => s.id !== song.id) // remove if already liked
-        : [song, ...prev]                    // add to front if not liked
-    );
+    const alreadyLiked = likedSongs.find(s => s.id === song.id);
+    let updated;
+    if (alreadyLiked) {
+      updated = likedSongs.filter(s => s.id !== song.id); // remove it
+    } else {
+      updated = [song, ...likedSongs]; // add to front
+    }
+    setLikedSongs(updated);
   }
 
-  // isLiked: returns true if a song (by id) is in likedSongs
+  // Returns true if a song (by ID) is in the liked songs list
   function isLiked(id) {
     return likedSongs.some(s => s.id === id);
   }
 
-  // setMoodQueue: plays the first song in a new mood-based queue
-  function setMoodQueue(songs) {
-    if (!songs.length) return;
-    setQueue(songs);
-    setQueueIndex(0);
-    loadSong(songs[0]);
-    setIsPlaying(true);
-  }
-
-  // addMoodEntry: appends a chat message to the mood history (max 60 items)
-  function addMoodEntry(entry) {
-    setMoodHistory(prev => [entry, ...prev].slice(0, 60));
-  }
-
-  // ── derived values ────────────────────────────────────────────────────────
-  // currentTime: the current playback position in seconds
+  // Current playback position in seconds (used for the timestamp display)
   const currentTime = (progress / 100) * duration;
-  // upNext: the song after the current one in the queue
-  const upNext = queue[queueIndex + 1] || null;
 
-  // Everything inside this object is shared with every component via usePlayer()
+  // The song that comes after the current one in the queue (used for "Up Next")
+  const currentQueueIndex = currentQueue.findIndex(s => s.id === currentSong?.id);
+  const upNext = currentQueue[currentQueueIndex + 1] || null;
+
+  // Step 2: Share everything below with all components via usePlayer()
   const value = {
-    currentSong, queue, queueIndex, upNext,
-    isPlaying, progress, duration, currentTime,
+    currentSong, isPlaying, progress, duration, currentTime, upNext,
     volume, isMuted, isExpanded,
-    likedSongs, recentlyPlayed, moodHistory,
-    playSong, togglePlay, seekTo, skipNext, skipPrev,
+    likedSongs, recentlyPlayed,
+    playSong, togglePlay, skipNext, skipPrev, seekTo,
     toggleLike, isLiked,
     setVolume, setIsMuted, setIsExpanded,
-    setMoodQueue, addMoodEntry,
   };
 
   return (
-    // Step 2: Provide the value to all children components
+    // Wrap children so any component inside can call usePlayer()
     <PlayerContext.Provider value={value}>
-      {/* The hidden <audio> element that actually plays the music */}
-      <audio ref={audioRef} preload="metadata" />
       {children}
     </PlayerContext.Provider>
   );
 }
 
-// ── usePlayer ─────────────────────────────────────────────────────────────────
-// Custom hook: any component calls usePlayer() to access the shared music state.
-// We use context here to access the player state without passing props
+// Call this in any component to access the shared music player state
 export function usePlayer() {
-  const ctx = useContext(PlayerContext); // We use context here to access PlayerContext
-  if (!ctx) throw new Error('usePlayer must be inside PlayerProvider');
+  // We use context here to read the shared player state
+  const ctx = useContext(PlayerContext);
+  if (!ctx) throw new Error('usePlayer must be used inside PlayerProvider');
   return ctx;
 }

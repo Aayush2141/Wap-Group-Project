@@ -56,38 +56,39 @@ function keywordFallback(text) {
   return null; // nothing matched, no clue what mood this is
 }
 
-// Detects direct artist/song requests like "play Drake" or "play some Ed Sheeran"
+// checks if the user is just asking for a specific artist or song
+// like "play drake" or "put on some billie eilish" — that kind of thing
 function detectDirectSearch(text) {
   const lower = text.toLowerCase().trim();
 
-  // Trigger words that mean the user wants a specific artist or song
+  // words that usually mean they want something specific
   const triggers = ['play', 'put on', 'listen to', 'i love', 'i like', 'show me', 'give me'];
 
   for (const trigger of triggers) {
     if (lower.startsWith(trigger)) {
-      // Everything after the trigger word is the search query
       const query = text.slice(trigger.length).trim();
-      // Only use it if it's long enough to be a real artist/song name
-      if (query.length >= 2) return query;
+      if (query.length >= 2) return query; // gotta be at least 2 chars or its prob nothing
     }
   }
 
-  return null;
+  return null; // nope, not a direct search
 }
 
-// Quick mood suggestion chips shown above the input
+// little chips the user can tap instead of typing something out
+// tried to cover the most common vibes people usually feel
 const QUICK_CHIPS = [
-  "I'm feeling happy today 😊",
-  "Need to study 📚",
-  "Workout time 💪",
-  "Feeling super chill ✨",
-  "I'm really sad 😢",
-  "Party mood 🎉",
-  "Late night vibes 🌙",
-  "Just got dumped 💔",
+  "i'm feeling happy today 😊",
+  "need to study 📚",
+  "workout time 💪",
+  "feeling super chill ✨",
+  "i'm really sad 😢",
+  "party mood 🎉",
+  "late night vibes 🌙",
+  "just got dumped 💔",
 ];
 
-// Renders a single song result row inside a bot message
+// each individual song card in the chat results
+// click anywhere on it to play, or hit the green button on hover
 function SongResultRow({ song, onPlay }) {
   const [imgErr, setImgErr] = useState(false);
   const cover = song.cover || song.album?.cover || song.album?.coverSmall;
@@ -99,7 +100,7 @@ function SongResultRow({ song, onPlay }) {
         transition-colors hover:bg-white/5 border border-white/[0.04] hover:border-[#1db954]/20"
       style={{ background: 'rgba(255,255,255,0.03)' }}
     >
-      {/* Album art */}
+      {/* album cover — falls back to a music icon if it fails to load */}
       <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#282828]">
         {cover && !imgErr ? (
           <img
@@ -115,13 +116,13 @@ function SongResultRow({ song, onPlay }) {
         )}
       </div>
 
-      {/* Title and artist */}
+      {/* song name + who made it */}
       <div className="flex-1 min-w-0">
         <p className="text-white text-xs font-semibold truncate">{song.title}</p>
         <p className="text-[#a7a7a7] text-[11px] truncate">{song.artist?.name}</p>
       </div>
 
-      {/* Play button — visible on hover */}
+      {/* lil play button, only shows up when you hover */}
       <button
         onClick={(e) => { e.stopPropagation(); onPlay(song); }}
         className="w-7 h-7 rounded-full bg-[#1db954] flex items-center justify-center flex-shrink-0

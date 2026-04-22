@@ -145,20 +145,24 @@ export default function SongCard({ song, queue = [], index = 0 }) {
       </div>
 
       {/* Info */}
-      <div className="flex flex-col gap-1 min-w-0">
+<div className="flex flex-col gap-1 min-w-0">
+  <p
+    className={`text-sm font-semibold truncate leading-tight transition-colors ${
+      active ? "text-[#1db954]" : "text-white"
+    }`}
+  >
+    {song.title}
+  </p>
 
-        <p className={`text-sm font-semibold truncate leading-tight transition-colors
-          ${active ? 'text-[#1db954]' : 'text-white'}`}>
-          {song.title}
-        </p>
-        <button
-          onClick={handleArtist}
-          className="text-[11px] text-[#a7a7a7] hover:text-white hover:underline text-left truncate transition-colors"
-        >
-          {/* Support both flat (song.artist = string) and nested (song.artist.name) shapes */}
-          {typeof song.artist === 'string' ? song.artist:song.artist?.name}
-        </button>
-      </div>
-    </motion.div>
+  <button
+    onClick={handleArtist}
+    className="text-[11px] text-[#a7a7a7] hover:text-white hover:underline text-left truncate transition-colors"
+  >
+    {typeof song.artist === "string"
+      ? song.artist
+      : song.artist?.name}
+  </button>
+</div>
+</motion.div>
   );
 }

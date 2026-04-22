@@ -1,11 +1,11 @@
 # 🎵 Moodify
 
-A Spotify-inspired music streaming web app powered by the **iTunes Search API** and **Google Gemini AI**. Search for songs, browse artist pages, like tracks, and let the AI Mood DJ recommend music based on how you're feeling.
+A Spotify-inspired music streaming web app powered by the **Deezer API** and **Google Gemini AI**. Search for songs, browse artist pages, like tracks, and let the AI Mood DJ recommend music based on how you're feeling.
 
 ![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38bdf8?logo=tailwindcss&logoColor=white)
-![iTunes API](https://img.shields.io/badge/iTunes-Search%20API-fc3c44?logo=apple&logoColor=white)
+![Deezer API](https://img.shields.io/badge/Deezer-API-1a1a1a?logo=deezer&logoColor=white)
 ![Gemini AI](https://img.shields.io/badge/Gemini-AI-4285f4?logo=google&logoColor=white)
 
 ---
@@ -14,14 +14,14 @@ A Spotify-inspired music streaming web app powered by the **iTunes Search API** 
 
 | Feature | Description |
 |---|---|
-| 🔍 **Search** | Search any song or artist via the iTunes Search API |
-| 🎵 **Playback** | Play 30-second Apple CDN previews with a full-featured player bar |
+| 🔍 **Search** | Search any song or artist via the Deezer API |
+| 🎵 **Playback** | Play 30-second previews with a full-featured player bar |
 | ⏭️ **Queue** | Skip next/previous, auto-advance when a track ends |
 | ❤️ **Liked Songs** | Like tracks and view them in a dedicated Liked Songs page |
 | 🕐 **Recently Played** | Automatically tracks your last 10 played songs |
 | 🎤 **Artist Pages** | Click any artist to see their profile and top tracks |
 | 🧠 **Mood DJ** | Chat with a Gemini-powered AI that recommends songs based on your mood |
-| 📊 **Top Charts** | Home page loads the current iTunes top songs chart |
+| 📊 **Top Charts** | Home page loads the current Deezer top songs chart |
 | 💾 **Persistence** | Liked songs, recently played, and volume saved to `localStorage` |
 
 ---
@@ -60,7 +60,7 @@ Open `src/config.js` and paste your key:
 export const GEMINI_API_KEY = 'YOUR_API_KEY_HERE';
 ```
 
-> **Note:** The iTunes Search API requires no key — it works out of the box. Only the Mood DJ chat feature requires a Gemini key.
+> **Note:** The Deezer API requires no key — it works out of the box. Only the Mood DJ chat feature requires a Gemini key.
 
 ---
 
@@ -95,7 +95,7 @@ src/
 │   └── useFetchSongs.js     # Custom hooks: useFetchSongs, useFetchArtist, useFetchChart
 │
 └── utils/
-    └── api.js               # All iTunes API calls (fetchSongs, fetchChart, fetchArtist)
+    └── api.js               # All Deezer API calls (fetchSongs, fetchChart, fetchArtist)
 ```
 
 ---
@@ -117,7 +117,7 @@ Moodify uses a clean, beginner-friendly architecture with no complex state libra
             │
    ┌────────▼────────┐    ┌─────────────────────┐
    │  useFetchSongs  │───►│     utils/api.js     │
-   │  useFetchArtist │    │  iTunes Search API   │
+   │  useFetchArtist │    │      Deezer API      │
    │  useFetchChart  │    │  (no auth required)  │
    └─────────────────┘    └─────────────────────┘
 ```
@@ -126,7 +126,7 @@ Moodify uses a clean, beginner-friendly architecture with no complex state libra
 
 - **No external state library** — all state is managed with `useState`, `useEffect`, `useRef`, and React Context.
 - **No Axios** — all network requests use the native `fetch()` API.
-- **iTunes API** — provides free, reliable 30-second song previews and artwork with no API key needed.
+- **Deezer API** — provides free, reliable 30-second song previews and artwork with no API key needed.
 - **`localStorage`** — persists liked songs, recently played, and volume across sessions without a backend.
 
 ---
@@ -141,7 +141,7 @@ Moodify uses a clean, beginner-friendly architecture with no complex state libra
 | [Tailwind CSS v4](https://tailwindcss.com) | Utility-first styling |
 | [Framer Motion](https://www.framer.com/motion/) | Animations & transitions |
 | [Lucide React](https://lucide.dev) | Icon library |
-| [iTunes Search API](https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/iTuneSearchAPI/) | Song search, charts, artist lookup |
+| [Deezer API](https://developers.deezer.com/api) | Song search, charts, artist lookup |
 | [Google Gemini API](https://aistudio.google.com) | AI-powered Mood DJ chat |
 
 ---
@@ -185,4 +185,4 @@ vercel
 
 ## 📄 License
 
-This project is for educational purposes. Music previews are served via the Apple iTunes API under their terms of service.
+This project is for educational purposes. Music previews are served via the Deezer API under their terms of service.

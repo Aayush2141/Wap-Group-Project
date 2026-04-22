@@ -1,48 +1,49 @@
-// WHAT THIS FILE DOES:
-// The full-page Mood Chat feature. User types how they feel,
-// the app detects their mood from keywords, searches iTunes, and shows matching songs.
+// ok so this is the mood chat page
+// basically user tells us how they're feeling, we look for keywords
+// and then pull songs from itunes that kinda match
+// nothing too fancy, just vibes lol
 
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, RefreshCw, Music2 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { fetchSongs } from '../utils/api';
 
-// --- Mood keyword map ---
-// Maps mood words to iTunes search queries and a friendly response
+// mood map — each word maps to a search query + what the bot says back
+// i just picked the ones that felt right, can always add more later
 const MOOD_MAP = {
-  sad:        { mood: 'sad',        emoji: '😢', searchQuery: 'sad acoustic ballad',       response: "I can feel that. Here are some songs that match your mood." },
-  depressed:  { mood: 'sad',        emoji: '😔', searchQuery: 'emotional piano songs',     response: "Sometimes music is the best comfort. Sending you these." },
-  happy:      { mood: 'happy',      emoji: '😊', searchQuery: 'happy pop upbeat',          response: "Love the energy! Here's some feel-good music for you." },
-  excited:    { mood: 'excited',    emoji: '🥳', searchQuery: 'excited high energy pop',   response: "Let's go! Here are some tracks to match that excitement!" },
-  angry:      { mood: 'angry',      emoji: '😤', searchQuery: 'metal rage intense',        response: "Let it out. Here's some music to channel that energy." },
-  chill:      { mood: 'chill',      emoji: '😌', searchQuery: 'lofi chill beats',          response: "Perfect vibe. Here's something smooth and relaxed." },
-  relax:      { mood: 'relaxed',    emoji: '🛋️', searchQuery: 'relaxing ambient music',    response: "Take it easy with these calming tracks." },
-  focus:      { mood: 'focused',    emoji: '🎯', searchQuery: 'focus study instrumental',  response: "Get in the zone with these concentration tracks." },
-  study:      { mood: 'studying',   emoji: '📚', searchQuery: 'lofi study beats',          response: "Study mode activated. Here's your playlist." },
-  workout:    { mood: 'energetic',  emoji: '💪', searchQuery: 'workout gym motivation',    response: "Let's crush it! Here's your workout playlist." },
-  hype:       { mood: 'hyped',      emoji: '🔥', searchQuery: 'hype trap rap',             response: "Maximum hype incoming!" },
-  party:      { mood: 'party',      emoji: '🎊', searchQuery: 'party dance hits',          response: "Time to party! Here's the soundtrack." },
-  dance:      { mood: 'dancing',    emoji: '💃', searchQuery: 'dance edm pop',             response: "Let's dance! Here are some floor-fillers." },
-  love:       { mood: 'romantic',   emoji: '❤️', searchQuery: 'romantic love songs',       response: "How sweet! Here are some love songs for you." },
-  romantic:   { mood: 'romantic',   emoji: '💕', searchQuery: 'romantic date night music', response: "Setting the mood with these romantic tracks." },
-  sleep:      { mood: 'sleepy',     emoji: '😴', searchQuery: 'sleep calm ambient',        response: "Wind down with these soothing tracks." },
-  tired:      { mood: 'tired',      emoji: '😪', searchQuery: 'relaxing calm music',       response: "Rest your mind with these gentle sounds." },
-  nostalgic:  { mood: 'nostalgic',  emoji: '📻', searchQuery: 'nostalgic 90s throwback',   response: "Taking you back with these classic vibes." },
-  heartbreak: { mood: 'heartbroken',emoji: '💔', searchQuery: 'heartbreak breakup songs',  response: "It gets better. Here are some songs that understand." },
-  motivated:  { mood: 'motivated',  emoji: '🚀', searchQuery: 'motivation pump up',        response: "You've got this! Here's your motivation playlist." },
-  night:      { mood: 'late night', emoji: '🌙', searchQuery: 'late night chill ambient',  response: "Perfect for the late hours. Here's your night soundtrack." },
+  sad:        { mood: 'sad',        emoji: '😢', searchQuery: 'sad acoustic ballad',       response: "aw, i feel you. here's some music for that 💙" },
+  depressed:  { mood: 'sad',        emoji: '😔', searchQuery: 'emotional piano songs',     response: "hey, music helps. sending you these, hope it's okay" },
+  happy:      { mood: 'happy',      emoji: '😊', searchQuery: 'happy pop upbeat',          response: "omg yes!! let's keep that energy going 🎉" },
+  excited:    { mood: 'excited',    emoji: '🥳', searchQuery: 'excited high energy pop',   response: "YESSS let's gooo!! here's something to match that hype" },
+  angry:      { mood: 'angry',      emoji: '😤', searchQuery: 'metal rage intense',        response: "ok yeah let it OUT. here's some stuff to blast 🔥" },
+  chill:      { mood: 'chill',      emoji: '😌', searchQuery: 'lofi chill beats',          response: "nice, same tbh. here's something lowkey and smooth" },
+  relax:      { mood: 'relaxed',    emoji: '🛋️', searchQuery: 'relaxing ambient music',    response: "okay yeah just breathe. here u go 🌿" },
+  focus:      { mood: 'focused',    emoji: '🎯', searchQuery: 'focus study instrumental',  response: "locked in mode!! these should help you stay in the zone" },
+  study:      { mood: 'studying',   emoji: '📚', searchQuery: 'lofi study beats',          response: "studyyyying... okay here's some lofi to help" },
+  workout:    { mood: 'energetic',  emoji: '💪', searchQuery: 'workout gym motivation',    response: "let's GET IT!! here's your workout playlist 💥" },
+  hype:       { mood: 'hyped',      emoji: '🔥', searchQuery: 'hype trap rap',             response: "okayyyy we're hyped!! 🔥🔥" },
+  party:      { mood: 'party',      emoji: '🎊', searchQuery: 'party dance hits',          response: "it's a PARTY!! here's the vibe 🎊" },
+  dance:      { mood: 'dancing',    emoji: '💃', searchQuery: 'dance edm pop',             response: "okay LET'S DANCE!! here u go 💃" },
+  love:       { mood: 'romantic',   emoji: '❤️', searchQuery: 'romantic love songs',       response: "awww that's cute!! here are some love songs 💕" },
+  romantic:   { mood: 'romantic',   emoji: '💕', searchQuery: 'romantic date night music', response: "ooooh setting the vibe huh 👀 here ya go" },
+  sleep:      { mood: 'sleepy',     emoji: '😴', searchQuery: 'sleep calm ambient',        response: "okay okay, wind down time. here's something soft 🌙" },
+  tired:      { mood: 'tired',      emoji: '😪', searchQuery: 'relaxing calm music',       response: "you need rest bestie, here's something chill" },
+  nostalgic:  { mood: 'nostalgic',  emoji: '📻', searchQuery: 'nostalgic 90s throwback',   response: "taking you waaay back 📻 classic stuff incoming" },
+  heartbreak: { mood: 'heartbroken',emoji: '💔', searchQuery: 'heartbreak breakup songs',  response: "hey, it'll be okay. here are songs that get it 💔" },
+  motivated:  { mood: 'motivated',  emoji: '🚀', searchQuery: 'motivation pump up',        response: "you got thisss!!! here's your hype playlist 🚀" },
+  night:      { mood: 'late night', emoji: '🌙', searchQuery: 'late night chill ambient',  response: "late night hours... here's your late night soundtrack 🌙" },
 };
 
-// Checks the user's message for any known mood keywords
+// tries to figure out the mood from what the user typed
+// just loops through the mood map and checks if any keyword shows up
 function keywordFallback(text) {
   const lower = text.toLowerCase();
 
-  // Check each keyword in the mood map using simple includes()
   for (const [keyword, data] of Object.entries(MOOD_MAP)) {
     if (lower.includes(keyword)) return data;
   }
 
-  // Extra common phrases — all using simple includes() checks
+  // some extra phrases people commonly say — adding more over time
   if (lower.includes('feeling down') || lower.includes('feeling blue') || lower.includes('feeling low')) return MOOD_MAP.sad;
   if (lower.includes('need to focus') || lower.includes('need to study') || lower.includes('need to work')) return MOOD_MAP.study;
   if (lower.includes("let's party") || lower.includes('lets party') || lower.includes("let's dance")) return MOOD_MAP.party;
@@ -52,7 +53,7 @@ function keywordFallback(text) {
   if (lower.includes('in love') || lower.includes('in a relationship')) return MOOD_MAP.love;
   if (lower.includes('late night') || lower.includes('night vibes')) return MOOD_MAP.night;
 
-  return null; // no mood detected
+  return null; // nothing matched, no clue what mood this is
 }
 
 // Detects direct artist/song requests like "play Drake" or "play some Ed Sheeran"

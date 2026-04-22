@@ -67,29 +67,27 @@ export function SongCarousel({ songs = [], loading = false, skeletonCount = 8, t
       )}
 
       {/* Scrollable row */}
-      <div
-        ref={scrollRef}
-        className="snap-container"
-      >
-        {loading
-          ? Array.from({ length: skeletonCount }).map((_, i) => (
-              <div key={i} className="snap-item w-44">
-                <SongCardSkeleton />
-              </div>
-            ))
-          : songs.map((s, i) => (
-              <motion.div
-                key={s.id}
-                className="snap-item w-44"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: Math.min(i * 0.05, 0.5) }}
-              >
-                <SongCard song={s} queue={songs} index={i} />
-              </motion.div>
-            ))
-        }
+      <div ref={scrollRef} className="snap-container">
+  {loading ? (
+    Array.from({ length: skeletonCount }).map((_, i) => (
+      <div key={i} className="snap-item w-44">
+        <SongCardSkeleton />
       </div>
+    ))
+  ) : (
+    songs.map((s, i) => (
+      <motion.div
+        key={s.id}
+        className="snap-item w-44"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: Math.min(i * 0.05, 0.5) }}
+      >
+        <SongCard song={s} queue={songs} index={i} />
+      </motion.div>
+    ))
+  )}
+</div>
     </section>
   );
 }

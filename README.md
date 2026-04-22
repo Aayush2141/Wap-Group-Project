@@ -139,7 +139,6 @@ Moodify uses a clean, beginner-friendly architecture with no complex state libra
 | [Vite 8](https://vitejs.dev) | Build tool & dev server |
 | [React Router v7](https://reactrouter.com) | Client-side routing |
 | [Tailwind CSS v4](https://tailwindcss.com) | Utility-first styling |
-| [Framer Motion](https://www.framer.com/motion/) | Animations & transitions |
 | [Lucide React](https://lucide.dev) | Icon library |
 | [Deezer API](https://developers.deezer.com/api) | Song search, charts, artist lookup |
 | [Google Gemini API](https://aistudio.google.com) | AI-powered Mood DJ chat |

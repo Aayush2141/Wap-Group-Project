@@ -1,4 +1,4 @@
-# 🎵 Moodify
+# 🎵 Tuneify
 
 A Spotify-inspired music streaming web app powered by the **Deezer API** and **Google Gemini AI**. Search for songs, browse artist pages, like tracks, and let the AI Mood DJ recommend music based on how you're feeling.
 
@@ -37,8 +37,8 @@ A Spotify-inspired music streaming web app powered by the **Deezer API** and **G
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/moodify.git
-cd moodify
+git clone https://github.com/your-username/tuneify.git
+cd tuneify
 
 # 2. Install dependencies
 npm install
@@ -102,7 +102,7 @@ src/
 
 ## 🏗️ Architecture
 
-Moodify uses a clean, beginner-friendly architecture with no complex state libraries.
+Tuneify uses a clean, beginner-friendly architecture with no complex state libraries.
 
 ```
 ┌──────────────────────────────────────────────────┐

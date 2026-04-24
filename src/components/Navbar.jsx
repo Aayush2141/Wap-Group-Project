@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, ChevronLeft, ChevronRight, User, Bell, X } from 'lucide-react';
+import { useEffect } from 'react';
 
 /* ---------- inline styles for animations (replaces framer-motion) ---------- */
 const styles = `
@@ -42,6 +43,11 @@ const styles = `
   pointer-events: auto;
 }
 `;
+
+useEffect(() => {
+  return () => clearTimeout(timerRef.current);
+}, []);
+
 
 export default function Navbar() {
   const navigate = useNavigate();

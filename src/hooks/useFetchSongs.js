@@ -84,20 +84,22 @@ export function useFetchChart(limit = 20) {
   useEffect(() => {
     let cancelled = false;
 
-    const getSongs = async () => {
+    async function loadSongs() {
       try {
         const data = await fetchChart(limit);
         if (!cancelled) setSongs(data);
-      } catch (err) {
-        if (!cancelled) setError(err.message);
+      } catch (e) {
+        if (!cancelled) setError(e.message);
       } finally {
         if (!cancelled) setLoading(false);
       }
+    }
+
+    loadSongs();
+
+    return () => {
+      cancelled = true;
     };
-
-    getSongs();
-
-    return () => (cancelled = true);
   }, [limit]);
 
   return { songs, loading, error };

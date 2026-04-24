@@ -79,28 +79,36 @@ export default function Navbar() {
     if (e.key === 'Escape') {
       setQuery(''); inputRef.current?.blur(); }
   };
+      
 
-  const clearSearch = () => { setQuery(''); inputRef.current?.focus(); };
-  return (
-    <>
-      <style>{styles}</style>
-      <header className={`navbar-root flex items-center justify-between px-6 py-3 glass-dark sticky top-0 z-40 border-b border-white/[0.06]`}>
 
-        <div className="flex items-center gap-1.5">
-          {[
-            { icon: ChevronLeft, action: () => navigate(-1), label: 'Back' },
-            { icon: ChevronRight, action: () => navigate(1), label: 'Forward' },
-          ].map(({ icon: Icon, action, label }) => (
-            <button
-              key={label}
-              onClick={action}
-              aria-label={label}
-              className="nav-icon-btn w-8 h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center text-[#a7a7a7] hover:text-white transition-colors"
-            >
-              <Icon size={16} />
-            </button>
-          ))}
-        </div>
+  const goBack = () => navigate(-1);
+const goForward = () => navigate(1);
+
+const navButtons = [
+  { icon: ChevronLeft, action: goBack, label: 'Back' },
+  { icon: ChevronRight, action: goForward, label: 'Forward' },
+];
+
+const canGoBack = window.history.length > 1;
+
+<div className="flex items-center gap-1.5">
+  {navButtons.map(({ icon: Icon, action, label }) => (
+    <button
+      key={label}
+      onClick={action}
+      disabled={label === 'Back' && !canGoBack}
+      aria-label={`Go ${label.toLowerCase()}`}
+      title={`Go ${label}`}
+      className={`nav-icon-btn w-8 h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center transition-colors
+        ${label === 'Back' && !canGoBack
+          ? 'opacity-40 cursor-not-allowed'
+          : 'text-[#a7a7a7] hover:text-white'}`}
+    >
+      <Icon size={16} />
+    </button>
+  ))}
+</div>
 
         {/* Search bar */}
         <div className={`search-wrapper relative${focused ? ' expanded' : ''}`}>

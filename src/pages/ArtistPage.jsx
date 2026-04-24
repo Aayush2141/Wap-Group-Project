@@ -181,21 +181,21 @@ export default function ArtistPage() {
       )}
 
       {/* ── Controls ────────────────────────────────────────────────────── */}
-      <div className="px-8 py-5 flex items-center gap-4">
-        <motion.button
-          whileHover={{ scale: 1.06 }}
-          whileTap={{ scale: 0.94 }}
-          onClick={handlePlayAll}
-          disabled={!songs.length}
-          className="w-14 h-14 rounded-full bg-[#1db954] hover:bg-[#1ed760] flex items-center justify-center
-            shadow-lg shadow-green-900/40 disabled:opacity-40 transition-colors"
-        >
-          {isArtistActive
-            ? <Pause size={22} fill="black" className="text-black" />
-            : <Play  size={22} fill="black" className="text-black ml-0.5" />
-          }
-        </motion.button>
-      </div>
+     <div className="px-8 py-5 flex items-center gap-4">
+  <motion.button
+    whileHover={{ scale: 1.06 }}
+    whileTap={{ scale: 0.94 }}
+    onClick={handlePlayAll}
+    disabled={!songs.length}
+    className="w-14 h-14 rounded-full bg-[#1db954] hover:bg-[#1ed760] flex items-center justify-center shadow-lg shadow-green-900/40 disabled:opacity-40 transition-colors"
+  >
+    {isArtistActive ? (
+      <Pause size={22} fill="black" className="text-black" />
+    ) : (
+      <Play size={22} fill="black" className="text-black ml-0.5" />
+    )}
+  </motion.button>
+</div>
 
       {/* ── Track list ──────────────────────────────────────────────────── */}
       <div className="px-6 pb-8">

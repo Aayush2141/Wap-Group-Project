@@ -1,4 +1,4 @@
-# 🎵 Tuneify
+# 🎵🎧 Tuneify
 
 A Spotify-inspired music streaming web app powered by the **Deezer API** and **Google Gemini AI**. Search for songs, browse artist pages, like tracks, and let the AI Mood DJ recommend music based on how you're feeling.
 

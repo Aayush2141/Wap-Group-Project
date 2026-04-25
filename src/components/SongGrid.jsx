@@ -3,25 +3,44 @@ import { motion } from 'framer-motion';
 import SongCard, { SongCardSkeleton } from './SongCard';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 
-/* ── Grid layout ───────────────────────────────────────────────────────────── */
-export default function SongGrid({ songs = [], loading = false, skeletonCount = 10, title }) {
+// Grid layout 
+export default function SongGrid({
+  songs = [],
+  loading = false,
+  skeletonCount = 10,
+  title,
+}) {
+  const renderContent = () => {
+    if (loading) {
+      return Array.from({ length: skeletonCount }).map((_, i) => (
+        <SongCardSkeleton key={i} />
+      ));
+    }
+
+    if (songs.length === 0) {
+      return (
+        <div className="py-16 text-center text-[#535353]">
+          No songs found.
+        </div>
+      );
+    }
+
+    return songs.map((song, i) => (
+      <SongCard key={song.id} song={song} queue={songs} index={i} />
+    ));
+  };
+
   return (
     <section>
       {title && <h2 className="text-xl font-bold text-white mb-4">{title}</h2>}
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {loading
-          ? Array.from({ length: skeletonCount }).map((_, i) => <SongCardSkeleton key={i} />)
-          : songs.map((s, i) => <SongCard key={s.id} song={s} queue={songs} index={i} />)
-        }
+        {renderContent()}
       </div>
-      {!loading && songs.length === 0 && (
-        <div className="py-16 text-center text-[#535353]">No songs found.</div>
-      )}
     </section>
   );
 }
-
-/* ── Horizontal scroll carousel ───────────────────────────────────────────── */
+//  / Horizontal scroll carousel 
 export function SongCarousel({ songs = [], loading = false, skeletonCount = 8, title, onShowAll }) {
   const scrollRef = useRef(null);
 
@@ -68,29 +87,27 @@ export function SongCarousel({ songs = [], loading = false, skeletonCount = 8, t
       )}
 
       {/* Scrollable row */}
-      <div
-        ref={scrollRef}
-        className="snap-container"
-      >
-        {loading
-          ? Array.from({ length: skeletonCount }).map((_, i) => (
-              <div key={i} className="snap-item w-44">
-                <SongCardSkeleton />
-              </div>
-            ))
-          : songs.map((s, i) => (
-              <motion.div
-                key={s.id}
-                className="snap-item w-44"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: Math.min(i * 0.05, 0.5) }}
-              >
-                <SongCard song={s} queue={songs} index={i} />
-              </motion.div>
-            ))
-        }
+      <div ref={scrollRef} className="snap-container">
+  {loading ? (
+    Array.from({ length: skeletonCount }).map((_, i) => (
+      <div key={i} className="snap-item w-44">
+        <SongCardSkeleton />
       </div>
+    ))
+  ) : (
+    songs.map((s, i) => (
+      <motion.div
+        key={s.id}
+        className="snap-item w-44"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: Math.min(i * 0.05, 0.5) }}
+      >
+        <SongCard song={s} queue={songs} index={i} />
+      </motion.div>
+    ))
+  )}
+</div>
     </section>
   );
 }

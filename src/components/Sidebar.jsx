@@ -1,47 +1,81 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { NavLink } from 'react-router-dom';
 import { Home, Search, Heart, MessageCircle, Music2, Clock } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 
+const styles = `
+@keyframes fadeSlideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlideLeft {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scalePop {
+  from { transform: scale(0); }
+  to   { transform: scale(1); }
+}
+.logo-anim     { animation: fadeSlideDown 0.3s ease forwards; }
+.liked-anim    { animation: fadeSlideUp  0.3s ease forwards; }
+.dot-anim      { animation: scalePop     0.2s ease forwards; }
+.recent-item   { animation: fadeSlideLeft 0.25s ease forwards; }
+.nav-pill {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.08);
+  border-radius: 0.75rem;
+  transition: opacity 0.2s ease;
+}
+`;
+
 /* ── Animated nav item ─────────────────────────────────────────────────────── */
 function NavItem({ to, icon: Icon, label, exact = false }) {
-  return (
-    <NavLink
-      to={to}
-      end={exact}
-      className={({ isActive }) =>
-        `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200
-         ${isActive ? 'text-white' : 'text-[#a7a7a7] hover:text-white'}`
-      }
-    >
-      {({ isActive }) => (
-        <>
-          {/* Active pill */}
-          {isActive && (
-            <motion.div
-              layoutId="nav-pill"
-              className="absolute inset-0 bg-white/8 rounded-xl"
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            />
-          )}
-          <Icon
-            size={20}
-            className="relative z-10 flex-shrink-0"
-            fill={isActive ? 'currentColor' : 'none'}
-            strokeWidth={isActive ? 2.5 : 2}
-          />
-          <span className="relative z-10">{label}</span>
+  function getLinkClass({ isActive }) {
+    let colorClass;
+    if (isActive) {
+      colorClass = 'text-white';
+    } else {
+      colorClass = 'text-[#a7a7a7] hover:text-white';
+    }
+    return `relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors duration-200 ${colorClass}`;
+  }
 
-          {/* Green dot for active */}
-          {isActive && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-[#1db954]"
-            />
-          )}
-        </>
-      )}
+  function renderContent({ isActive }) {
+    let iconFill;
+    let iconStroke;
+
+    if (isActive) {
+      iconFill = 'currentColor';
+      iconStroke = 2.5;
+    } else {
+      iconFill = 'none';
+      iconStroke = 2;
+    }
+
+    return (
+      <>
+        {isActive && <div className="nav-pill" />}
+        <Icon
+          size={20}
+          className="relative z-10 flex-shrink-0"
+          fill={iconFill}
+          strokeWidth={iconStroke}
+        />
+        <span className="relative z-10">{label}</span>
+        {isActive && (
+          <div className="dot-anim relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-[#1db954]" />
+        )}
+      </>
+    );
+  }
+
+  return (
+    <NavLink to={to} end={exact} className={getLinkClass}>
+      {renderContent}
     </NavLink>
   );
 }
@@ -51,14 +85,41 @@ function RecentItem({ song, index }) {
   const { playSong, currentSong, isPlaying } = usePlayer();
   const active = currentSong?.id === song.id;
 
+  let liClass;
+  if (active) {
+    liClass = 'recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group bg-white/8';
+  } else {
+    liClass = 'recent-item flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group hover:bg-white/5';
+  }
+
+  let titleClass;
+  if (active) {
+    titleClass = 'text-xs font-semibold truncate leading-tight text-[#1db954]';
+  } else {
+    titleClass = 'text-xs font-semibold truncate leading-tight text-white';
+  }
+
+  let overlay;
+  if (active && isPlaying) {
+    overlay = (
+      <div className="absolute inset-0 rounded-lg bg-black/50 flex items-center justify-center gap-0.5">
+        <span className="eq-bar" style={{ height: 8 }} />
+        <span className="eq-bar" style={{ height: 14 }} />
+        <span className="eq-bar" style={{ height: 8 }} />
+      </div>
+    );
+  } else {
+    overlay = (
+      <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z" /></svg>
+      </div>
+    );
+  }
   return (
-    <motion.li
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
+    <li
       onClick={() => playSong(song)}
-      className={`flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer transition-colors duration-150 group
-        ${active ? 'bg-white/8' : 'hover:bg-white/5'}`}
+      className={liClass}
+      style={{ animationDelay: `${index * 0.05}s`, opacity: 0, animationFillMode: 'forwards' }}
     >
       <div className="relative w-10 h-10 flex-shrink-0">
         <img
@@ -66,25 +127,13 @@ function RecentItem({ song, index }) {
           alt={song.title}
           className="w-10 h-10 rounded-lg object-cover"
         />
-        {active && isPlaying ? (
-          <div className="absolute inset-0 rounded-lg bg-black/50 flex items-center justify-center gap-0.5">
-            <span className="eq-bar" style={{ height: 8 }} />
-            <span className="eq-bar" style={{ height: 14 }} />
-            <span className="eq-bar" style={{ height: 8 }} />
-          </div>
-        ) : (
-          <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M5 3l14 9-14 9V3z"/></svg>
-          </div>
-        )}
+        {overlay}
       </div>
       <div className="overflow-hidden">
-        <p className={`text-xs font-semibold truncate leading-tight ${active ? 'text-[#1db954]' : 'text-white'}`}>
-          {song.title}
-        </p>
+        <p className={titleClass}>{song.title}</p>
         <p className="text-[11px] text-[#a7a7a7] truncate">{song.artist?.name}</p>
       </div>
-    </motion.li>
+    </li>
   );
 }
 
@@ -94,12 +143,10 @@ export default function Sidebar() {
 
   return (
     <aside className="w-[240px] flex-shrink-0 flex flex-col gap-2 p-2 overflow-hidden bg-[#050505]">
+      <style>{styles}</style>
+
       {/* Logo */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-2.5 px-3 py-4"
-      >
+      <div className="logo-anim flex items-center gap-2.5 px-3 py-4">
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1db954] to-[#7c3aed] flex items-center justify-center shadow-lg">
           <Music2 size={18} fill="black" className="text-black" />
         </div>
@@ -107,14 +154,14 @@ export default function Sidebar() {
           <span className="text-white font-black text-lg tracking-tight leading-none block">Moodify</span>
           <span className="text-[10px] text-[#535353] font-medium">Mood-powered music</span>
         </div>
-      </motion.div>
+      </div>
 
       {/* Main nav */}
       <nav className="bg-[#111111] rounded-2xl p-2 flex flex-col gap-0.5">
-        <NavItem to="/"       icon={Home}          label="Home"        exact />
-        <NavItem to="/search" icon={Search}        label="Search" />
-        <NavItem to="/mood"   icon={MessageCircle} label="Mood Chat" />
-        <NavItem to="/liked"  icon={Heart}         label="Liked Songs" />
+        <NavItem to="/" icon={Home} label="Home" exact />
+        <NavItem to="/search" icon={Search} label="Search" />
+        <NavItem to="/mood" icon={MessageCircle} label="Mood Chat" />
+        <NavItem to="/liked" icon={Heart} label="Liked Songs" />
       </nav>
 
       {/* Library */}
@@ -131,11 +178,12 @@ export default function Sidebar() {
           )}
         </div>
 
-        {recentlyPlayed.length === 0 ? (
+        {recentlyPlayed.length === 0 && (
           <p className="text-[#535353] text-xs px-1 py-4 text-center leading-relaxed">
             Songs you play<br />will appear here
           </p>
-        ) : (
+        )}
+        {recentlyPlayed.length > 0 && (
           <ul className="flex flex-col gap-0.5">
             {recentlyPlayed.slice(0, 12).map((song, i) => (
               <RecentItem key={song.id} song={song} index={i} />
@@ -145,30 +193,24 @@ export default function Sidebar() {
       </div>
 
       {/* Liked songs banner */}
-      <AnimatePresence>
-        {likedSongs.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
+      {likedSongs.length > 0 && (
+        <div className="liked-anim">
+          <NavLink
+            to="/liked"
+            className="mx-0.5 mb-1 flex items-center gap-3 rounded-2xl p-3 overflow-hidden relative
+              bg-gradient-to-r from-indigo-900/60 to-purple-900/60 border border-white/5
+              hover:border-white/10 transition-all group"
           >
-            <NavLink
-              to="/liked"
-              className="mx-0.5 mb-1 flex items-center gap-3 rounded-2xl p-3 overflow-hidden relative
-                bg-gradient-to-r from-indigo-900/60 to-purple-900/60 border border-white/5
-                hover:border-white/10 transition-all group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center flex-shrink-0">
-                <Heart size={16} fill="white" className="text-white" />
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-white text-xs font-bold">Liked Songs</p>
-                <p className="text-[#a7a7a7] text-[11px]">{likedSongs.length} song{likedSongs.length !== 1 ? 's' : ''}</p>
-              </div>
-            </NavLink>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <Heart size={16} fill="white" className="text-white" />
+            </div>
+            <div className="overflow-hidden">
+              <p className="text-white text-xs font-bold">Liked Songs</p>
+              <p className="text-[#a7a7a7] text-[11px]">{likedSongs.length} song{likedSongs.length !== 1 && 's'}</p>
+            </div>
+          </NavLink>
+        </div>
+      )}
     </aside>
   );
 }

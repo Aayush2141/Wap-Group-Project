@@ -1,7 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Search, ChevronLeft, ChevronRight, User, Bell, X } from 'lucide-react';
-import { useEffect } from 'react';
 
 /* ---------- inline styles for animations (replaces framer-motion) ---------- */
 const styles = `
@@ -44,11 +43,6 @@ const styles = `
 }
 `;
 
-useEffect(() => {
-  return () => clearTimeout(timerRef.current);
-}, []);
-
-
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,58 +51,71 @@ export default function Navbar() {
   const inputRef = useRef(null);
   const timerRef = useRef(null);
 
+  useEffect(() => {
+    return () => clearTimeout(timerRef.current);
+  }, []);
+
+  const clearSearch = () => {
+    setQuery('');
+    inputRef.current?.focus();
+  };
 
   /* Debounced navigation to /search */
   const handleChange = (e) => {
-  const val = e.target.value;
-  setQuery(val);
+    const val = e.target.value;
+    setQuery(val);
 
-  const trimmed = val.trim();
-  clearTimeout(timerRef.current);
+    const trimmed = val.trim();
+    clearTimeout(timerRef.current);
 
-  if (!trimmed) return;
+    if (!trimmed) return;
 
-  timerRef.current = setTimeout(() => {
-  navigate(`/search?q=${trimmed}`);
-   }, 400); // slightly optimized delay
-};
+    timerRef.current = setTimeout(() => {
+      navigate(`/search?q=${trimmed}`);
+    }, 400);
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && query.trim())
       navigate(`/search?q=${query.trim()}`);
     if (e.key === 'Escape') {
-      setQuery(''); inputRef.current?.blur(); }
+      setQuery('');
+      inputRef.current?.blur();
+    }
   };
-      
-
 
   const goBack = () => navigate(-1);
-const goForward = () => navigate(1);
+  const goForward = () => navigate(1);
 
-const navButtons = [
-  { icon: ChevronLeft, action: goBack, label: 'Back' },
-  { icon: ChevronRight, action: goForward, label: 'Forward' },
-];
+  const navButtons = [
+    { icon: ChevronLeft, action: goBack, label: 'Back' },
+    { icon: ChevronRight, action: goForward, label: 'Forward' },
+  ];
 
-const canGoBack = window.history.length > 1;
+  const canGoBack = window.history.length > 1;
 
-<div className="flex items-center gap-1.5">
-  {navButtons.map(({ icon: Icon, action, label }) => (
-    <button
-      key={label}
-      onClick={action}
-      disabled={label === 'Back' && !canGoBack}
-      aria-label={`Go ${label.toLowerCase()}`}
-      title={`Go ${label}`}
-      className={`nav-icon-btn w-8 h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center transition-colors
-        ${label === 'Back' && !canGoBack
-          ? 'opacity-40 cursor-not-allowed'
-          : 'text-[#a7a7a7] hover:text-white'}`}
-    >
-      <Icon size={16} />
-    </button>
-  ))}
-</div>
+  return (
+    <>
+      <style>{styles}</style>
+
+      <header className="navbar-root flex items-center justify-between px-4 py-2">
+        <div className="flex items-center gap-1.5">
+          {navButtons.map(({ icon: Icon, action, label }) => (
+            <button
+              key={label}
+              onClick={action}
+              disabled={label === 'Back' && !canGoBack}
+              aria-label={`Go ${label.toLowerCase()}`}
+              title={`Go ${label}`}
+              className={`nav-icon-btn w-8 h-8 rounded-full bg-black/50 border border-white/5 flex items-center justify-center transition-colors
+                ${label === 'Back' && !canGoBack
+                  ? 'opacity-40 cursor-not-allowed'
+                  : 'text-[#a7a7a7] hover:text-white'}`}
+            >
+              <Icon size={16} />
+            </button>
+          ))}
+        </div>
 
         {/* Search bar */}
         <div className={`search-wrapper relative${focused ? ' expanded' : ''}`}>
@@ -123,7 +130,10 @@ const canGoBack = window.history.length > 1;
             value={query}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            onFocus={() => { setFocused(true); if (location.pathname !== '/search') navigate('/search'); }}
+            onFocus={() => {
+              setFocused(true);
+              if (location.pathname !== '/search') navigate('/search');
+            }}
             onBlur={() => setFocused(false)}
             placeholder="What do you want to play?"
             className="w-full pl-9 pr-8 py-2 text-sm text-white rounded-full
@@ -133,7 +143,9 @@ const canGoBack = window.history.length > 1;
           />
           <button
             onClick={clearSearch}
-            className={`clear-btn absolute right-3 top-1/2 -translate-y-1/2 text-[#a7a7a7] hover:text-white transition-colors ${query ? 'visible-btn' : 'hidden-btn'}`}
+            className={`clear-btn absolute right-3 top-1/2 -translate-y-1/2 text-[#a7a7a7] hover:text-white transition-colors ${
+              query ? 'visible-btn' : 'hidden-btn'
+            }`}
           >
             <X size={14} />
           </button>

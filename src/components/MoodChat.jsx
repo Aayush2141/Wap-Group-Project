@@ -1,15 +1,8 @@
-// ok so this is the mood chat page
-// basically user tells us how they're feeling, we look for keywords
-// and then pull songs from itunes that kinda match
-// nothing too fancy, just vibes lol
-
 import { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, RefreshCw, Music2 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { fetchSongs } from '../utils/api';
 
-// mood map — each word maps to a search query + what the bot says back
-// i just picked the ones that felt right, can always add more later
 const MOOD_MAP = {
   sad:        { mood: 'sad',        emoji: '😢', searchQuery: 'sad acoustic ballad',       response: "aw, i feel you. here's some music for that 💙" },
   depressed:  { mood: 'sad',        emoji: '😔', searchQuery: 'emotional piano songs',     response: "hey, music helps. sending you these, hope it's okay" },
@@ -34,8 +27,6 @@ const MOOD_MAP = {
   night:      { mood: 'late night', emoji: '🌙', searchQuery: 'late night chill ambient',  response: "late night hours... here's your late night soundtrack 🌙" },
 };
 
-// tries to figure out the mood from what the user typed
-// just loops through the mood map and checks if any keyword shows up
 function keywordFallback(text) {
   const lower = text.toLowerCase();
 
@@ -43,7 +34,6 @@ function keywordFallback(text) {
     if (lower.includes(keyword)) return data;
   }
 
-  // some extra phrases people commonly say — adding more over time
   if (lower.includes('feeling down') || lower.includes('feeling blue') || lower.includes('feeling low')) return MOOD_MAP.sad;
   if (lower.includes('need to focus') || lower.includes('need to study') || lower.includes('need to work')) return MOOD_MAP.study;
   if (lower.includes("let's party") || lower.includes('lets party') || lower.includes("let's dance")) return MOOD_MAP.party;
@@ -53,29 +43,24 @@ function keywordFallback(text) {
   if (lower.includes('in love') || lower.includes('in a relationship')) return MOOD_MAP.love;
   if (lower.includes('late night') || lower.includes('night vibes')) return MOOD_MAP.night;
 
-  return null; // nothing matched, no clue what mood this is
+  return null;
 }
 
-// checks if the user is just asking for a specific artist or song
-// like "play drake" or "put on some billie eilish" — that kind of thing
 function detectDirectSearch(text) {
   const lower = text.toLowerCase().trim();
 
-  // words that usually mean they want something specific
   const triggers = ['play', 'put on', 'listen to', 'i love', 'i like', 'show me', 'give me'];
 
   for (const trigger of triggers) {
     if (lower.startsWith(trigger)) {
       const query = text.slice(trigger.length).trim();
-      if (query.length >= 2) return query; // gotta be at least 2 chars or its prob nothing
+      if (query.length >= 2) return query;
     }
   }
 
-  return null; // nope, not a direct search
+  return null;
 }
 
-// little chips the user can tap instead of typing something out
-// tried to cover the most common vibes people usually feel
 const QUICK_CHIPS = [
   "i'm feeling happy today 😊",
   "need to study 📚",
@@ -87,8 +72,6 @@ const QUICK_CHIPS = [
   "just got dumped 💔",
 ];
 
-// each individual song card in the chat results
-// click anywhere on it to play, or hit the green button on hover
 function SongResultRow({ song, onPlay }) {
   const [imgErr, setImgErr] = useState(false);
   const cover = song.cover || song.album?.cover || song.album?.coverSmall;
@@ -117,18 +100,15 @@ function SongResultRow({ song, onPlay }) {
         transition-colors hover:bg-white/5 border border-white/[0.04] hover:border-[#1db954]/20"
       style={{ background: 'rgba(255,255,255,0.03)' }}
     >
-      {/* album cover — falls back to a music icon if it fails to load */}
       <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-[#282828]">
         {displayImage}
       </div>
 
-      {/* song name + who made it */}
       <div className="flex-1 min-w-0">
         <p className="text-white text-xs font-semibold truncate">{song.title}</p>
         <p className="text-[#a7a7a7] text-[11px] truncate">{song.artist?.name}</p>
       </div>
 
-      {/* lil play button, only shows up when you hover */}
       <button
         onClick={(e) => { e.stopPropagation(); onPlay(song); }}
         className="w-7 h-7 rounded-full bg-[#1db954] flex items-center justify-center flex-shrink-0
@@ -141,11 +121,9 @@ function SongResultRow({ song, onPlay }) {
   );
 }
 
-// A bot message bubble (left-aligned)
 function BotMessage({ msg }) {
   return (
     <div className="flex items-start gap-3 max-w-[88%]">
-      {/* Bot avatar */}
       <div
         className="w-7 h-7 rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center"
         style={{ background: 'linear-gradient(135deg, #1db954, #7c3aed)', boxShadow: '0 0 12px rgba(29,185,84,0.3)' }}
@@ -156,7 +134,6 @@ function BotMessage({ msg }) {
       </div>
 
       <div className="flex-1 min-w-0">
-        {/* Text bubble */}
         <div
           className="inline-block rounded-2xl rounded-tl-sm px-4 py-3 mb-2"
           style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -164,7 +141,6 @@ function BotMessage({ msg }) {
           <p className="text-white text-sm leading-relaxed">{msg.text}</p>
         </div>
 
-        {/* Song results (if any) */}
         {msg.songs?.length > 0 && (
           <div className="flex flex-col gap-1.5">
             {msg.songs.map(song => (
@@ -177,7 +153,6 @@ function BotMessage({ msg }) {
   );
 }
 
-// A user message bubble (right-aligned)
 function UserMessage({ msg }) {
   return (
     <div className="flex justify-end">
@@ -191,9 +166,7 @@ function UserMessage({ msg }) {
   );
 }
 
-// The main MoodChat component
 export default function MoodChat() {
-  // We use context here to access playSong and recentlyPlayed
   const { playSong } = usePlayer();
 
   const [messages,    setMessages]    = useState([{
@@ -206,12 +179,10 @@ export default function MoodChat() {
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
 
-  // Auto-scroll to the latest message whenever messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
 
-  // Process the user's message and fetch matching songs
   const processMessage = async (text) => {
     const trimmed = text.trim();
     if (!trimmed || isLoading) return;
@@ -220,10 +191,8 @@ export default function MoodChat() {
     setMessages(prev => [...prev, { id: Date.now(), role: 'user', text: trimmed }]);
     setIsLoading(true);
 
-    // Short delay for a more natural chat feel
     await new Promise(r => setTimeout(r, 600));
 
-    // Step 1: Check if the user is asking for a specific artist or song
     const directQuery = detectDirectSearch(trimmed);
     if (directQuery) {
       try {
@@ -240,11 +209,9 @@ export default function MoodChat() {
           return;
         }
       } catch {
-        // If direct search fails, fall through to mood detection
       }
     }
 
-    // Step 2: Try keyword mood detection
     const moodData = keywordFallback(trimmed);
 
     if (!moodData) {
@@ -256,7 +223,6 @@ export default function MoodChat() {
       return;
     }
 
-    // Step 3: Fetch songs matching the detected mood
     try {
       const songs = await fetchSongs(moodData.searchQuery, 5);
       const onPlay = (song) => playSong(song, songs);
@@ -304,7 +270,6 @@ export default function MoodChat() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
 
-      {/* Header */}
       <div className="px-6 pt-6 pb-4 flex-shrink-0 border-b border-white/[0.05]">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -332,7 +297,6 @@ export default function MoodChat() {
           </button>
         </div>
 
-        {/* Quick mood chips */}
         <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {QUICK_CHIPS.map(chip => (
             <button
@@ -350,7 +314,6 @@ export default function MoodChat() {
         </div>
       </div>
 
-      {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-4" style={{ scrollbarWidth: 'thin', scrollbarColor: '#2a2a2a transparent' }}>
         {messages.map(msg => {
           if (msg.role === 'user') {
@@ -359,7 +322,6 @@ export default function MoodChat() {
           return <BotMessage key={msg.id} msg={msg} />;
         })}
 
-        {/* Typing indicator — shown while fetching songs */}
         {isLoading && (
           <div className="flex items-center gap-3">
             <div
@@ -381,11 +343,9 @@ export default function MoodChat() {
           </div>
         )}
 
-        {/* Invisible div at the bottom — used for auto-scrolling */}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input bar */}
       <div
         className="flex items-center gap-3 px-4 py-4 flex-shrink-0"
         style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.2)' }}
@@ -424,7 +384,6 @@ export default function MoodChat() {
         </button>
       </div>
 
-      {/* Keyboard shortcut hint */}
       <p className="text-[#535353] text-[10px] text-center pb-3">
         Space = play/pause · Alt+→/← = next/prev · M = mute
       </p>

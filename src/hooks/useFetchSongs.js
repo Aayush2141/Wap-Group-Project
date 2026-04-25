@@ -1,106 +1,96 @@
+// WHAT THIS FILE DOES:
+// Custom hooks that fetch song/artist/chart data from iTunes.
+// Each hook uses only useState + useEffect + fetch — no extra libraries.
+
 import { useState, useEffect } from 'react';
 import { fetchSongs, fetchArtist, fetchChart } from '../utils/api';
 
-// Searches songs by query with a debounce delay
-export function useFetchSongs(query, limit = 20, debounceMs = 400) {
-  const [songs, setSongs] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+// Fetches songs from iTunes whenever the query string changes
+export function useFetchSongs(query, limit = 20) {
+  const [songs,   setSongs]   = useState([]);       // stores the list of songs
+  const [loading, setLoading] = useState(false);    // true while the request is running
+  const [error,   setError]   = useState(null);     // stores any error message
 
-useEffect(() => {
-  if (!query?.trim()) {
-    setSongs([]);
-    setLoading(false);
-    return;
-  }
-    let cancelled = false;
+  // This useEffect runs every time the query or limit changes
+  useEffect(() => {
+    // If there's no query, clear results and stop
+    if (!query?.trim()) {
+      setSongs([]);
+      return;
+    }
 
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      setError(null);
+    const fetchData = async () => {
       try {
-        const songs = await fetchSongs(query.trim(), limit);
-        if (!cancelled) setSongs(songs);
+        setLoading(true);
+        setError(null);
+        const data = await fetchSongs(query.trim(), limit);
+        setSongs(data);
       } catch (err) {
-        if (!cancelled) {
-          setError(err.message);
-          setSongs([]);
-        }
+        setError(err.message);
+        setSongs([]);
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
-    }, debounceMs);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
     };
-  }, [query, limit, debounceMs]);
+
+    fetchData();
+  }, [query, limit]); // re-run whenever query or limit changes
 
   return { songs, loading, error };
 }
 
+// Fetches a specific artist's info and top tracks by their iTunes artist ID
 export function useFetchArtist(artistId) {
-  const [artist, setArtist] = useState(null);
-  const [songs, setSongs] = useState([]);
+  const [artist,  setArtist]  = useState(null);
+  const [songs,   setSongs]   = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error,   setError]   = useState(null);
 
+  // This useEffect runs when the artistId in the URL changes
   useEffect(() => {
     if (!artistId) return;
 
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const result = await fetchArtist(artistId);
+        setArtist(result.artist);
+        setSongs(result.songs);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    fetchArtist(artistId)
-      .then(({ artist, songs }) => {
-        if (!cancelled) {
-          setArtist(artist);
-          setSongs(songs);
-        }
-      })
-      .catch(err => {
-        if (!cancelled) setError(err.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => { cancelled = true; };
-  }, [artistId]);
+    fetchData();
+  }, [artistId]); // re-run whenever the artist ID changes
 
   return { artist, songs, loading, error };
 }
 
-// Fetches the top chart songs
-import { useState, useEffect } from "react";
-
+// Fetches the current iTunes top chart
 export function useFetchChart(limit = 20) {
-  const [songs, setSongs] = useState([]);
+  const [songs,   setSongs]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error,   setError]   = useState(null);
 
+  // This useEffect runs once when the component first mounts
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadSongs() {
+    const fetchData = async () => {
       try {
         const data = await fetchChart(limit);
-        if (!cancelled) setSongs(data);
-      } catch (e) {
-        if (!cancelled) setError(e.message);
+        setSongs(data);
+      } catch (err) {
+        setError(err.message);
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
-    }
-
-    loadSongs();
-
-    return () => {
-      cancelled = true;
     };
-  }, [limit]);
+
+    fetchData();
+  }, [limit]); // only re-runs if limit changes (almost never)
 
   return { songs, loading, error };
 }

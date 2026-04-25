@@ -1,24 +1,12 @@
-/**
- * api.js — Music API using iTunes Search API as primary source.
- *
- * WHY iTunes instead of Deezer?
- *   - Zero authentication required
- *   - Full CORS support (no proxy needed)
- *   - No geo-restrictions — works globally
- *   - Guaranteed working 30-second preview URLs (Apple CDN)
- *   - Album artwork always available (replace 100x100 → bigger size)
- *
- * iTunes Search API: https://itunes.apple.com/search
- * iTunes Lookup API: https://itunes.apple.com/lookup
- */
+// WHAT THIS FILE DOES:
+// All API calls to the iTunes Search API live here.
+// Every other file imports from this file — no API logic scattered elsewhere.
 
 const ITUNES = 'https://itunes.apple.com';
 
-/* ── Normalise raw iTunes track ─────────────────────────────────────────────
-   Returns a consistent shape used by every component in the app.
-─────────────────────────────────────────────────────────────────────────────*/
+// Takes a raw iTunes track object and returns a consistent shape used everywhere in the app
 export function normalizeTrack(t) {
-  // Upgrade artwork from 100x100 to 500x500 by swapping the size token
+  // iTunes gives 100x100 artwork — swap to get 500x500 for better quality
   const cover = (t.artworkUrl100 || t.artworkUrl60 || '')
     .replace('100x100bb', '500x500bb')
     .replace('100x100', '500x500') || null;
@@ -28,17 +16,13 @@ export function normalizeTrack(t) {
   return {
     id:       t.trackId,
     title:    t.trackName,
-    cover,                               // top-level (used directly by SongCard)
-    preview:  t.previewUrl || null,      // Apple CDN 30-sec MP3
+    cover,                             // used directly by SongCard
+    preview:  t.previewUrl || null,    // 30-second Apple CDN MP3
     duration: Math.round((t.trackTimeMillis || 30000) / 1000),
     artistId: t.artistId || null,
-
-    // Nested objects for PlayerBar, ArtistPage, etc.
     artist: {
-      id:           t.artistId  || null,
-      name:         t.artistName || 'Unknown Artist',
-      picture:      null,  // iTunes doesn't expose artist photos
-      pictureSmall: null,
+      id:   t.artistId  || null,
+      name: t.artistName || 'Unknown Artist',
     },
     album: {
       id:         t.collectionId   || null,
@@ -47,82 +31,75 @@ export function normalizeTrack(t) {
       coverSmall,
       coverLarge: cover,
     },
-    rank: 0,
   };
 }
 
-/* ── Core search ────────────────────────────────────────────────────────────*/
-/**
- * Search songs by query string.
- * Returns an array of normalised tracks with preview URLs.
- */
+// Search iTunes for songs matching a query string
 export async function fetchSongs(query, limit = 20) {
   if (!query?.trim()) return [];
 
-  const url =
-    `${ITUNES}/search?` +
-    `term=${encodeURIComponent(query.trim())}` +
-    `&media=music&entity=song&limit=${limit}`;
+  const url = `${ITUNES}/search?term=${encodeURIComponent(query.trim())}&media=music&entity=song&limit=${limit}`;
 
-  const res  = await fetch(url);
-  const data = await res.json();
+  const response = await fetch(url);
+  const data = await response.json();
 
+  // Filter: only return tracks that have a preview URL and a valid track ID
   return (data.results || [])
     .filter(t => t.previewUrl && t.trackId && t.wrapperType === 'track')
     .map(normalizeTrack);
 }
 
-/* ── Chart — uses iTunes "top songs" search ─────────────────────────────── */
+// Fetch the current iTunes top chart songs
 export async function fetchChart(limit = 20) {
-  // iTunes RSS feed for top songs (JSON, no auth, no CORS)
   try {
-    const res  = await fetch(
+    // iTunes RSS feed — returns top songs as JSON, no auth needed
+    const response = await fetch(
       `https://rss.applemarketingtools.com/api/v2/us/music/most-played/${limit}/songs.json`
     );
-    const data = await res.json();
-    const ids  = (data.feed?.results || []).map(r => r.id).join(',');
+    const data = await response.json();
+    const ids = (data.feed?.results || []).map(r => r.id).join(',');
 
     if (!ids) throw new Error('No chart IDs');
 
+    // Look up the full track details for each chart entry
     const lookup = await fetch(`${ITUNES}/lookup?id=${ids}&entity=song`);
-    const lData  = await lookup.json();
-    const tracks = (lData.results || [])
+    const lookupData = await lookup.json();
+    const tracks = (lookupData.results || [])
       .filter(t => t.previewUrl && t.trackId)
       .map(normalizeTrack);
 
     if (tracks.length > 0) return tracks;
     throw new Error('Empty chart');
   } catch {
-    // Fallback: search for "top hits" — always returns something
+    // Fallback: search "top hits" if chart feed fails
     return fetchSongs('top hits', limit);
   }
 }
 
-/* ── Artist lookup ──────────────────────────────────────────────────────────*/
+// Fetch an artist's info and their top tracks by artist ID
 export async function fetchArtist(artistId) {
-  const [artistRes, tracksRes] = await Promise.all([
+  // Run both requests at the same time with Promise.all to save time
+  const [artistResponse, tracksResponse] = await Promise.all([
     fetch(`${ITUNES}/lookup?id=${artistId}`),
     fetch(`${ITUNES}/lookup?id=${artistId}&entity=song&limit=20`),
   ]);
+
   const [artistData, tracksData] = await Promise.all([
-    artistRes.json(),
-    tracksRes.json(),
+    artistResponse.json(),
+    tracksResponse.json(),
   ]);
 
   const rawArtist = artistData.results?.[0] || {};
-  const songs     = (tracksData.results || [])
+
+  // Only keep songs that have a preview URL
+  const songs = (tracksData.results || [])
     .filter(t => t.wrapperType === 'track' && t.previewUrl)
     .map(normalizeTrack);
 
   return {
-    // Shape matches what ArtistPage expects
     artist: {
-      id:             rawArtist.artistId,
-      name:           rawArtist.artistName || 'Unknown Artist',
-      nb_fan:         null,
-      picture_medium: null,
-      picture_xl:     null,
-      picture_big:    null,
+      id:   rawArtist.artistId,
+      name: rawArtist.artistName || 'Unknown Artist',
     },
     songs,
   };

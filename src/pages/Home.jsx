@@ -1,105 +1,77 @@
+// WHAT THIS FILE DOES:
+// The Home page — shows a greeting, hero banner, recently played songs,
+// the iTunes top chart, and genre-based song carousels.
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Flame, Clock, Sparkles, TrendingUp, ChevronRight } from 'lucide-react';
+import { Flame, Clock, Sparkles, TrendingUp } from 'lucide-react';
 import { SongCarousel } from '../components/SongGrid';
 import { useFetchSongs, useFetchChart } from '../hooks/useFetchSongs';
 import { usePlayer } from '../context/PlayerContext';
 
-/* ── Greeting helper ─────────────────────────────────────────────────────────── */
+// Returns a greeting based on the current hour
 function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 12) return { text: 'Good morning', emoji: '☀️' };
-  if (h < 18) return { text: 'Good afternoon', emoji: '🌤️' };
+  const hour = new Date().getHours();
+  if (hour < 12) return { text: 'Good morning', emoji: '☀️' };
+  if (hour < 18) return { text: 'Good afternoon', emoji: '🌤️' };
   return { text: 'Good evening', emoji: '🌙' };
 }
 
-/* ── Hero banner ─────────────────────────────────────────────────────────────── */
+// Hero banner with gradient background and call-to-action buttons
 function HeroBanner() {
   const navigate = useNavigate();
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
+    <div
       className="relative rounded-3xl overflow-hidden mb-8 p-8 min-h-[220px] flex flex-col justify-end noise"
       style={{
         background: 'linear-gradient(135deg, rgba(29,185,84,0.3) 0%, rgba(124,58,237,0.3) 60%, rgba(10,10,10,0) 100%)',
         borderBottom: '1px solid rgba(29,185,84,0.15)',
       }}
     >
-      {/* Animated orbs */}
-      {[
-        { size: 280, top: '-60px', left: '-40px', color: '#1db954', delay: 0 },
-        { size: 200, top: '20px',  right: '60px', color: '#7c3aed', delay: 0.5 },
-        { size: 150, bottom: '-30px', right: '20%', color: '#1db954', delay: 1 },
-      ].map(({ size, color, delay, ...pos }, i) => (
-        <motion.div
-          key={i}
-          animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.25, 0.15] }}
-          transition={{ duration: 4 + i, repeat: Infinity, delay }}
-          className="absolute rounded-full blur-3xl pointer-events-none"
-          style={{ width: size, height: size, background: color, ...pos }}
-        />
-      ))}
+      {/* Decorative blurred orbs */}
+      <div className="absolute rounded-full blur-3xl pointer-events-none opacity-20"
+        style={{ width: 280, height: 280, top: '-60px', left: '-40px', background: '#1db954' }} />
+      <div className="absolute rounded-full blur-3xl pointer-events-none opacity-15"
+        style={{ width: 200, height: 200, top: '20px', right: '60px', background: '#7c3aed' }} />
+      <div className="absolute rounded-full blur-3xl pointer-events-none opacity-15"
+        style={{ width: 150, height: 150, bottom: '-30px', right: '20%', background: '#1db954' }} />
 
       <div className="relative z-10">
-        <motion.p
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="text-[#1db954] text-sm font-bold flex items-center gap-2 mb-3"
-        >
+        <p className="text-[#1db954] text-sm font-bold flex items-center gap-2 mb-3">
           <Sparkles size={14} /> AI-Powered Music Discovery
-        </motion.p>
-        <motion.h1
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-          className="text-4xl md:text-5xl font-black text-white mb-3 leading-tight"
-        >
+        </p>
+        <h1 className="text-4xl md:text-5xl font-black text-white mb-3 leading-tight">
           Music that{' '}
           <span className="text-gradient-green">feels you</span>
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-[#a7a7a7] text-sm mb-5 max-w-md"
-        >
-          Tell our AI how you feel and get a perfect playlist in seconds. No algorithms — just vibes.
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="flex items-center gap-3"
-        >
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
+        </h1>
+        <p className="text-[#a7a7a7] text-sm mb-5 max-w-md">
+          Tell our Mood DJ how you feel and get a perfect playlist in seconds. No algorithms — just vibes.
+        </p>
+        <div className="flex items-center gap-3">
+          <button
             onClick={() => navigate('/mood')}
-            className="px-6 py-2.5 bg-[#1db954] hover:bg-[#1ed760] text-black font-bold text-sm rounded-full transition-colors"
+            className="px-6 py-2.5 bg-[#1db954] hover:bg-[#1ed760] text-black font-bold text-sm rounded-full
+              transition-colors hover:scale-105 active:scale-97"
             style={{ boxShadow: 'var(--shadow-green)' }}
           >
             ✨ Try Mood Chat
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
+          </button>
+          <button
             onClick={() => navigate('/search')}
-            className="px-6 py-2.5 bg-white/10 hover:bg-white/15 text-white font-semibold text-sm rounded-full border border-white/10 transition-colors"
+            className="px-6 py-2.5 bg-white/10 hover:bg-white/15 text-white font-semibold text-sm
+              rounded-full border border-white/10 transition-colors hover:scale-105 active:scale-97"
           >
             Browse Music
-          </motion.button>
-        </motion.div>
+          </button>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-/* ── Recently played quick row ───────────────────────────────────────────────── */
+// A row of recently played songs shown as quick-access cards
 function RecentRow({ songs }) {
+  // We use context here to access playSong, currentSong, isPlaying
   const { playSong, currentSong, isPlaying } = usePlayer();
   if (!songs.length) return null;
 
@@ -109,18 +81,15 @@ function RecentRow({ songs }) {
         <Clock size={16} className="text-[#a7a7a7]" /> Recently Played
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {songs.slice(0, 6).map((song, i) => {
+        {songs.slice(0, 6).map(song => {
           const active = currentSong?.id === song.id;
           return (
-            <motion.div
+            <div
               key={song.id}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-              whileHover={{ scale: 1.02 }}
               onClick={() => playSong(song)}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-colors
-                ${active ? 'bg-white/10' : 'bg-[#161616] hover:bg-[#1e1e1e]'} 
+              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 cursor-pointer transition-all
+                hover:scale-102 active:scale-98
+                ${active ? 'bg-white/10' : 'bg-[#161616] hover:bg-[#1e1e1e]'}
                 border border-transparent hover:border-white/[0.06]`}
             >
               <div className="relative w-11 h-11 flex-shrink-0">
@@ -129,6 +98,7 @@ function RecentRow({ songs }) {
                   alt={song.title}
                   className="w-11 h-11 rounded-lg object-cover"
                 />
+                {/* Equalizer bars — shown when this song is playing */}
                 {active && isPlaying && (
                   <div className="absolute inset-0 rounded-lg bg-black/50 flex items-end justify-center gap-0.5 pb-1">
                     <span className="eq-bar" style={{ height: 5  }} />
@@ -143,7 +113,7 @@ function RecentRow({ songs }) {
                 </p>
                 <p className="text-[11px] text-[#a7a7a7] truncate">{song.artist?.name}</p>
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>
@@ -151,18 +121,14 @@ function RecentRow({ songs }) {
   );
 }
 
-/* ── Carousel section ────────────────────────────────────────────────────────── */
-function CarouselSection({ title, query, icon: Icon, delay = 0 }) {
-  const navigate   = useNavigate();
-  const { songs, loading } = useFetchSongs(query, 16, 0);
+// A single carousel section — fetches its own songs based on a query
+function CarouselSection({ title, query, icon: Icon }) {
+  const navigate = useNavigate();
+  // useFetchSongs runs immediately when this component mounts
+  const { songs, loading } = useFetchSongs(query, 16);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      className="mb-10"
-    >
+    <div className="mb-10">
       <SongCarousel
         songs={songs}
         loading={loading}
@@ -175,25 +141,25 @@ function CarouselSection({ title, query, icon: Icon, delay = 0 }) {
         onShowAll={() => navigate(`/search?q=${encodeURIComponent(query)}`)}
         skeletonCount={8}
       />
-    </motion.div>
+    </div>
   );
 }
 
-/* ── Home page ────────────────────────────────────────────────────────────────── */
+// The main Home page component
 export default function Home() {
+  // We use context here to access recentlyPlayed
   const { recentlyPlayed } = usePlayer();
-  const { songs: chartSongs, loading: chartLoading } = useFetchChart(16);
   const navigate  = useNavigate();
   const greeting  = getGreeting();
 
+  // useFetchChart fetches the iTunes top chart songs
+  const { songs: chartSongs, loading: chartLoading } = useFetchChart(16);
+
   return (
     <div className="px-6 py-6 page-enter">
-      {/* Greeting */}
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-6"
-      >
+
+      {/* Greeting header */}
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-black text-white">
           {greeting.emoji} {greeting.text}
         </h1>
@@ -203,36 +169,31 @@ export default function Home() {
         >
           <Sparkles size={14} /> Mood DJ
         </button>
-      </motion.div>
+      </div>
 
-      {/* Hero */}
+      {/* Hero banner */}
       <HeroBanner />
 
-      {/* Recently Played */}
+      {/* Recently Played quick row */}
       <RecentRow songs={recentlyPlayed} />
 
-      {/* Global chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="mb-10"
-      >
+      {/* iTunes Top Chart carousel */}
+      <div className="mb-10">
         <SongCarousel
           songs={chartSongs}
           loading={chartLoading}
           title={<span className="flex items-center gap-2"><TrendingUp size={16} className="text-[#a7a7a7]" /> Global Top Charts</span>}
           onShowAll={() => navigate('/search?q=top hits 2024')}
         />
-      </motion.div>
+      </div>
 
       {/* Genre carousels */}
-      <CarouselSection title="🎤 Hip Hop & Rap"     query="hip hop rap"         delay={0.15} />
-      <CarouselSection title="🎵 Pop Hits"           query="pop hits"            delay={0.2}  />
-      <CarouselSection title="☕ Lo-Fi & Chill"      query="lofi chill beats"    delay={0.25} />
-      <CarouselSection title="🕺 Dance & EDM"        query="edm dance"           delay={0.3}  />
-      <CarouselSection title="🌿 Indie & Alternative" query="indie alternative"  delay={0.35} />
-      <CarouselSection title="💎 R&B & Soul"         query="rnb soul"            delay={0.4}  />
+      <CarouselSection title="🎤 Hip Hop & Rap"      query="hip hop rap"       />
+      <CarouselSection title="🎵 Pop Hits"            query="pop hits"          />
+      <CarouselSection title="☕ Lo-Fi & Chill"       query="lofi chill beats"  />
+      <CarouselSection title="🕺 Dance & EDM"         query="edm dance"         />
+      <CarouselSection title="🌿 Indie & Alternative" query="indie alternative" />
+      <CarouselSection title="💎 R&B & Soul"          query="rnb soul"          />
     </div>
   );
 }

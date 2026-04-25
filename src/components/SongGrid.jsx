@@ -1,58 +1,45 @@
+// WHAT THIS FILE DOES:
+// Layouts for displaying song cards: a regular grid (SongGrid) and
+// a horizontally scrolling carousel (SongCarousel).
+
 import { useRef } from 'react';
-import { motion } from 'framer-motion';
 import SongCard, { SongCardSkeleton } from './SongCard';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 
-// Grid layout 
-export default function SongGrid({
-  songs = [],
-  loading = false,
-  skeletonCount = 10,
-  title,
-}) {
-  const renderContent = () => {
-    if (loading) {
-      return Array.from({ length: skeletonCount }).map((_, i) => (
-        <SongCardSkeleton key={i} />
-      ));
-    }
-
-    if (songs.length === 0) {
-      return (
-        <div className="py-16 text-center text-[#535353]">
-          No songs found.
-        </div>
-      );
-    }
-
-    return songs.map((song, i) => (
-      <SongCard key={song.id} song={song} queue={songs} index={i} />
-    ));
-  };
-
+// Displays songs in a responsive CSS grid
+export default function SongGrid({ songs = [], loading = false, skeletonCount = 10, title }) {
   return (
     <section>
       {title && <h2 className="text-xl font-bold text-white mb-4">{title}</h2>}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        {renderContent()}
+        {loading
+          ? Array.from({ length: skeletonCount }).map((_, i) => <SongCardSkeleton key={i} />)
+          : songs.map((s, i) => <SongCard key={s.id} song={s} queue={songs} index={i} />)
+        }
       </div>
+
+      {!loading && songs.length === 0 && (
+        <div className="py-16 text-center text-[#535353]">No songs found.</div>
+      )}
     </section>
   );
 }
-//  / Horizontal scroll carousel 
+
+// Displays songs in a horizontally scrollable row with prev/next arrow buttons
 export function SongCarousel({ songs = [], loading = false, skeletonCount = 8, title, onShowAll }) {
+  // useRef lets us scroll the container without re-rendering
   const scrollRef = useRef(null);
 
-  const scroll = (dir) => {
+  const scroll = (direction) => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir * 320, behavior: 'smooth' });
+    el.scrollBy({ left: direction * 320, behavior: 'smooth' });
   };
 
   return (
     <section className="relative group/carousel">
-      {/* Header */}
+      {/* Header with title, "Show all" link, and arrow buttons */}
       {title && (
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-white">{title}</h2>
@@ -65,49 +52,44 @@ export function SongCarousel({ songs = [], loading = false, skeletonCount = 8, t
                 Show all
               </button>
             )}
-            {/* Arrow controls */}
+            {/* Arrow scroll buttons — visible on hover */}
             <div className="flex gap-1 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
-              {[
-                { icon: ChevronLeft,  dir: -1, label: 'Scroll left'  },
-                { icon: ChevronRight, dir:  1, label: 'Scroll right' },
-              ].map(({ icon: Icon, dir, label }) => (
-                <button
-                  key={label}
-                  onClick={() => scroll(dir)}
-                  aria-label={label}
-                  className="w-7 h-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center
-                    text-white hover:bg-white/20 transition-colors"
-                >
-                  <Icon size={14} />
-                </button>
-              ))}
+              <button
+                onClick={() => scroll(-1)}
+                aria-label="Scroll left"
+                className="w-7 h-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center
+                  text-white hover:bg-white/20 transition-colors"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                onClick={() => scroll(1)}
+                aria-label="Scroll right"
+                className="w-7 h-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center
+                  text-white hover:bg-white/20 transition-colors"
+              >
+                <ChevronRight size={14} />
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Scrollable row */}
+      {/* Horizontally scrollable row */}
       <div ref={scrollRef} className="snap-container">
-  {loading ? (
-    Array.from({ length: skeletonCount }).map((_, i) => (
-      <div key={i} className="snap-item w-44">
-        <SongCardSkeleton />
+        {loading
+          ? Array.from({ length: skeletonCount }).map((_, i) => (
+              <div key={i} className="snap-item w-44">
+                <SongCardSkeleton />
+              </div>
+            ))
+          : songs.map((s, i) => (
+              <div key={s.id} className="snap-item w-44">
+                <SongCard song={s} queue={songs} index={i} />
+              </div>
+            ))
+        }
       </div>
-    ))
-  ) : (
-    songs.map((s, i) => (
-      <motion.div
-        key={s.id}
-        className="snap-item w-44"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: Math.min(i * 0.05, 0.5) }}
-      >
-        <SongCard song={s} queue={songs} index={i} />
-      </motion.div>
-    ))
-  )}
-</div>
     </section>
   );
 }

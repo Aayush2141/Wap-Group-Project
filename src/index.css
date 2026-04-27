@@ -227,13 +227,7 @@ input[type="range"]::-webkit-slider-runnable-track { background: #404040; }
   animation: pulse-ring 1.5s ease-out infinite;
 }
 
-/* ─── Vinyl spin ─────────────────────────────────────────────────────────────── */
-@keyframes vinyl-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-.vinyl-spin { animation: vinyl-spin 8s linear infinite; }
-.vinyl-spin.paused { animation-play-state: paused; }
+
 
 /* ─── Page transition wrapper ────────────────────────────────────────────────── */
 .page-enter { animation: page-in 0.35s ease forwards; }

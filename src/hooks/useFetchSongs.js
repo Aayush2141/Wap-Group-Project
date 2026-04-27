@@ -1,19 +1,12 @@
-// WHAT THIS FILE DOES:
-// Custom hooks that fetch song/artist/chart data from iTunes.
-// Each hook uses only useState + useEffect + fetch — no extra libraries.
-
 import { useState, useEffect } from 'react';
 import { fetchSongs, fetchArtist, fetchChart } from '../utils/api';
 
-// Fetches songs from iTunes whenever the query string changes
 export function useFetchSongs(query, limit = 20) {
-  const [songs,   setSongs]   = useState([]);       // stores the list of songs
-  const [loading, setLoading] = useState(false);    // true while the request is running
-  const [error,   setError]   = useState(null);     // stores any error message
+  const [songs, setSongs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // This useEffect runs every time the query or limit changes
   useEffect(() => {
-    // If there's no query, clear results and stop
     if (!query?.trim()) {
       setSongs([]);
       return;
@@ -34,19 +27,17 @@ export function useFetchSongs(query, limit = 20) {
     };
 
     fetchData();
-  }, [query, limit]); // re-run whenever query or limit changes
+  }, [query, limit]);
 
   return { songs, loading, error };
 }
 
-// Fetches a specific artist's info and top tracks by their iTunes artist ID
 export function useFetchArtist(artistId) {
-  const [artist,  setArtist]  = useState(null);
-  const [songs,   setSongs]   = useState([]);
+  const [artist, setArtist] = useState(null);
+  const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState(null);
+  const [error, setError] = useState(null);
 
-  // This useEffect runs when the artistId in the URL changes
   useEffect(() => {
     if (!artistId) return;
 
@@ -65,18 +56,16 @@ export function useFetchArtist(artistId) {
     };
 
     fetchData();
-  }, [artistId]); // re-run whenever the artist ID changes
+  }, [artistId]);
 
   return { artist, songs, loading, error };
 }
 
-// Fetches the current iTunes top chart
 export function useFetchChart(limit = 20) {
-  const [songs,   setSongs]   = useState([]);
+  const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [error, setError] = useState(null);
 
-  // This useEffect runs once when the component first mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -90,7 +79,7 @@ export function useFetchChart(limit = 20) {
     };
 
     fetchData();
-  }, [limit]); // only re-runs if limit changes (almost never)
+  }, [limit]);
 
   return { songs, loading, error };
 }
